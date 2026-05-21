@@ -14,9 +14,12 @@ export const auth = betterAuth({
       maxAge: 60 * 60 * 24 * 7,
     },
   },
-  plugins: [nextCookies(),admin({
-    defaultRole:"owner"
-  })],
+  plugins: [
+    nextCookies(),
+    admin({
+      defaultRole: "owner",
+    }),
+  ],
   database: drizzleAdapter(db, {
     provider: "pg",
   }),

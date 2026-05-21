@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Roboto, Montserrat } from "next/font/google";
+import { Inter, Roboto, Montserrat, Geist } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
+
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const inter = Inter({
   variable: "--font-inter",
@@ -9,7 +13,7 @@ const inter = Inter({
 });
 
 const roboto = Roboto({
-  weight: ['400', '500', '700'],
+  weight: ["400", "500", "700"],
   variable: "--font-roboto",
   subsets: ["latin"],
   display: "swap",
@@ -34,9 +38,21 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${roboto.variable} ${montserrat.variable} h-full antialiased`}
+      className={cn(
+        "bg-gray-50",
+        "h-full",
+        "antialiased",
+        inter.variable,
+        roboto.variable,
+        montserrat.variable,
+        "font-sans",
+        geist.variable,
+      )}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }
