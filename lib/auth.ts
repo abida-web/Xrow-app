@@ -5,6 +5,7 @@ import { nextCookies } from "better-auth/next-js";
 import { admin } from "better-auth/plugins";
 
 export const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL,
   emailAndPassword: {
     enabled: true,
   },
@@ -20,6 +21,20 @@ export const auth = betterAuth({
       defaultRole: "owner",
     }),
   ],
+  user: {
+    additionalFields: {
+      onboardingCompleted: {
+        type: "boolean",
+        input: false,
+      },
+    },
+  },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    },
+  },
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
