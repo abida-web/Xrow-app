@@ -1,4 +1,5 @@
-import Link from "next/link";
+import Link from "next/link"
+;
 
 const GeneralButton = ({ label, link }: { label: string; link?: string }) => {
   const buttonClasses =

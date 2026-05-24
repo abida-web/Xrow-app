@@ -15,12 +15,6 @@ export const auth = betterAuth({
       maxAge: 60 * 60 * 24 * 7,
     },
   },
-  plugins: [
-    nextCookies(),
-    admin({
-      defaultRole: "owner",
-    }),
-  ],
   user: {
     additionalFields: {
       onboardingCompleted: {
@@ -35,6 +29,12 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     },
   },
+  plugins: [
+    admin({
+      defaultRole: "owner",
+    }),
+    nextCookies(), // Move this to the end
+  ],
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
