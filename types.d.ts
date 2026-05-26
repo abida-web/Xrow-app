@@ -1,11 +1,11 @@
+// types/index.ts or types.d.ts
 export interface User {
-  id?: string;
-  name?: string;
-  email?: string;
-  image?: string;
-  [key: string]: unknown;
+  id: string;
+  name: string;
+  email: string;
+  image?: string; // Allow undefined, not null
+  onboardingCompleted: boolean;
 }
-
 export interface FormDataProps {
   name: string;
   slug: string;

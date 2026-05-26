@@ -23,17 +23,30 @@ const OnBoarding = () => {
     currency: "AFG",
   });
   const router = useRouter();
+
   useEffect(() => {
     const checkAuth = async () => {
       const session = await authClient.getSession();
       if (session?.data?.user.onboardingCompleted) {
         router.push("/dashboard");
       }
-      // Add this line:
-      setUser(session?.data?.user || null);
+      // FIXED: Transform the user data to match User type
+      const sessionUser = session?.data?.user;
+      if (sessionUser) {
+        setUser({
+          id: sessionUser.id,
+          name: sessionUser.name,
+          email: sessionUser.email,
+          image: sessionUser.image || undefined, // Convert null to undefined
+          onboardingCompleted: sessionUser.onboardingCompleted,
+        });
+      } else {
+        setUser(null);
+      }
     };
     checkAuth();
   }, [router]);
+
   useEffect(() => {
     if (formData.name) {
       const generatedDomain = generateDomain(formData.name);
@@ -82,6 +95,7 @@ const OnBoarding = () => {
       console.error("Upload failed:", error);
     }
   };
+
   async function handleCreateStore() {
     setIsCreating(true);
     try {
@@ -183,7 +197,6 @@ const OnBoarding = () => {
           </h1>
           <div className="space-y-4">
             <div className="flex flex-col items-center gap-3">
-              {/* Preview on top */}
               {previewUrl && (
                 <div className="relative">
                   <img
@@ -195,7 +208,6 @@ const OnBoarding = () => {
                 </div>
               )}
 
-              {/* Upload input below */}
               <div className="w-full">
                 <input
                   onChange={handleFileUpload}
