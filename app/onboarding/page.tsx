@@ -20,20 +20,20 @@ const OnBoarding = () => {
     shopDomain: "",
     logoUrl: "",
     businessType: "",
-    currency: "USD",
+    currency: "AFG",
   });
   const router = useRouter();
-
   useEffect(() => {
     const checkAuth = async () => {
       const session = await authClient.getSession();
       if (session?.data?.user.onboardingCompleted) {
         router.push("/dashboard");
       }
+      // Add this line:
+      setUser(session?.data?.user || null);
     };
     checkAuth();
   }, [router]);
-
   useEffect(() => {
     if (formData.name) {
       const generatedDomain = generateDomain(formData.name);
@@ -82,7 +82,6 @@ const OnBoarding = () => {
       console.error("Upload failed:", error);
     }
   };
-
   async function handleCreateStore() {
     setIsCreating(true);
     try {
@@ -94,28 +93,33 @@ const OnBoarding = () => {
         body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to create store");
+        throw new Error(data.error || "Failed to create store");
       }
 
       await updateOnboardingUser();
-      if (response.ok) {
-        toast.success("Your shop created successfully");
-        setFormData({
-          name: "",
-          slug: "",
-          shopDomain: "",
-          logoUrl: "",
-          businessType: "",
-          currency: "USD",
-        });
-        router.push("/dashboard");
-      } else {
-        toast.error("Failed to update onboarding status");
-      }
+      toast.success("Your shop created successfully");
+
+      // Reset form
+      setFormData({
+        name: "",
+        slug: "",
+        shopDomain: "",
+        logoUrl: "",
+        businessType: "",
+        currency: "USD",
+      });
+      setPreviewUrl("");
+
+      // Navigate to the new store
+      router.push(`/dashboard/${data.slug}`);
     } catch (error) {
       console.error("Error creating store:", error);
-      toast.error("Failed to create the shop");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create the shop",
+      );
     } finally {
       setIsCreating(false);
     }

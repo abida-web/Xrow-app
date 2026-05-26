@@ -26,7 +26,7 @@ export const products = pgTable("products", {
   createAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
-export const productImags = pgTable("product_images", {
+export const productImages = pgTable("product_images", {
   id: uuid("id").defaultRandom().primaryKey(),
   productId: uuid("product_id")
     .references(() => products.id, {
@@ -47,13 +47,13 @@ export const productVariants = pgTable("product_variants", {
   price: numeric("price").notNull(),
   inventoryQuantity: integer("inventory_quantity"),
   weight: real("weight"),
-  imageId: uuid("image_id").references(() => productImags.id),
+  imageId: uuid("image_id").references(() => productImages.id),
   createAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 export const productOptions = pgTable("productOptions", {
   id: uuid("id").defaultRandom().primaryKey(),
-  productId: text("product_id")
+  productId: uuid("product_id")
     .references(() => products.id)
     .notNull(),
   name: text("name").notNull(),
@@ -67,10 +67,14 @@ export const productOptionsValues = pgTable("product_option_value", {
   value: text("value").notNull(),
 });
 export const variantOptionValues = pgTable(
-  "values",
+  "variant_option_values", // Changed table name from "values" to something more descriptive
   {
-    variantId: uuid("variant_id").references(() => productVariants.id),
-    optionValueId: uuid("variant+id"),
+    variantId: uuid("variant_id")
+      .references(() => productVariants.id, { onDelete: "cascade" })
+      .notNull(),
+    optionValueId: uuid("option_value_id") // Fixed: changed from "variant_id" to "option_value_id"
+      .references(() => productOptionsValues.id, { onDelete: "cascade" })
+      .notNull(),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.variantId, table.optionValueId] }),
@@ -89,7 +93,9 @@ export const collectionProducts = pgTable(
     collectionId: uuid("collection_id")
       .references(() => collections.id, { onDelete: "cascade" })
       .notNull(),
-    productId: uuid("product_id").references(() => products.id),
+    productId: uuid("product_id")
+      .references(() => products.id)
+      .notNull(),
   },
   (table) => ({
     pk: primaryKey({

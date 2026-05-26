@@ -1,7 +1,14 @@
-import Link from "next/link"
-;
+import Link from "next/link";
 
-const GeneralButton = ({ label, link }: { label: string; link?: string }) => {
+const GeneralButton = ({
+  label,
+  link,
+  className,
+}: {
+  label: string;
+  link?: string;
+  className?: string;
+}) => {
   const buttonClasses =
     "bg-[#06102c] px-5 py-2 hover:bg-[#14224c]/80 text-white rounded-full button-text";
 
@@ -10,7 +17,7 @@ const GeneralButton = ({ label, link }: { label: string; link?: string }) => {
   }
 
   return (
-    <Link href={link} className={buttonClasses}>
+    <Link href={link} className={className ? className : buttonClasses}>
       {label}
     </Link>
   );

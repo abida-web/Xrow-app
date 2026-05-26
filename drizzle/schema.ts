@@ -1,2 +1,3 @@
 export * from "@/drizzle/schemas/auth-schema";
-export * from "@/drizzle/schemas/store-schema"
+export * from "@/drizzle/schemas/store-schema";
+export * from "@/drizzle/schemas/product-schema";

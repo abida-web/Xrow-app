@@ -1,5 +1,5 @@
 import { db } from "@/drizzle/db";
-import { store, storeMembers, user } from "@/drizzle/schema";
+import { store, storeMembers, storeSettings, user } from "@/drizzle/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
@@ -18,6 +18,9 @@ export async function POST(req: Request) {
       logoUrl,
       businessType,
       currency,
+      activeTheme: "modern",
+      status: "active",
+      isPublished: false,
     })
     .returning();
   await db.insert(storeMembers).values({
@@ -25,5 +28,23 @@ export async function POST(req: Request) {
     userId: session?.user.id,
     role: "owner",
   });
-  return NextResponse.json({ success: true }, { status: 201 });
+  await db.insert(storeSettings).values({
+    storeId: newStore.id,
+    theme: "modern",
+    primaryColor: "#3B82F6",
+    secondaryColor: "#10B981",
+    heroTitle: `Welcome to ${newStore.name}!`,
+    heroSubtitle: "Discover amazing products at great prices",
+    heroImage: "/default-hero.jpg",
+    announcementText: "Free shipping on orders over $50!",
+    contactEmail: `hello@${slug}.com`,
+  });
+  return NextResponse.json(
+    {
+      success: true,
+      store: newStore,
+      slug: newStore.slug,
+    },
+    { status: 201 },
+  );
 }
