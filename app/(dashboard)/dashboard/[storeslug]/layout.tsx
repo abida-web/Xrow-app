@@ -5,6 +5,7 @@ import { store } from "@/drizzle/schema";
 import { auth } from "@/lib/auth";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import Sidebar from "../../_components/Sidebar";
 import Topbar from "../../_components/Topbar";
 
@@ -17,9 +18,25 @@ const StoreLayout = async ({
 }) => {
   const { storeslug } = await params;
   const session = await auth.api.getSession({ headers: await headers() });
+
+  // CHECK 1: User must be authenticated
+  if (!session?.user?.id) {
+    redirect("/auth/sign-in");
+  }
+
+  // CHECK 2: Verify the user owns this store
   const isStore = await db.query.store.findFirst({
-    where: and(eq(store?.slug, storeslug), eq(store.ownerId, session?.user.id)),
+    where: and(
+      eq(store.slug, storeslug), // REMOVED the ? after store
+      eq(store.ownerId, session.user.id), // REMOVED the ? after session
+    ),
   });
+
+  // CHECK 3: If no store found, redirect
+  if (!isStore) {
+    redirect("/dashboard");
+  }
+
   return (
     <div className="flex h-screen flex-col bg-gray-100">
       {/* Top Bar - Full Width */}
