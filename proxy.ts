@@ -1,4 +1,6 @@
-// middleware.ts
+// proxy.ts (rename from middleware.ts OR keep as middleware.ts with proxy export)
+
+// Option 1: If you want to keep the file as middleware.ts, export as proxy
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -6,7 +8,7 @@ export function proxy(request: NextRequest) {
   const hostname = request.headers.get("host") || "";
   const path = request.nextUrl.pathname;
 
-  console.log("📍 Middleware:", { hostname, path }); // For debugging
+  console.log("📍 Proxy:", { hostname, path }); // For debugging
 
   // Skip API routes, static files, and auth routes
   if (
