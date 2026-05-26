@@ -18,7 +18,7 @@ const AuthCallBack = () => {
       if (needOnboarding) {
         router.push("/onboarding");
       } else {
-        router.push("/");
+        router.push("/dashboard");
       }
     };
     handleAuth();
