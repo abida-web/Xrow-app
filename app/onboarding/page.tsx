@@ -114,7 +114,10 @@ const OnBoarding = () => {
       }
 
       await updateOnboardingUser();
-      toast.success("Your shop created successfully");
+      // Inside handleCreateStore function, after successful creation
+      toast.success(
+        `Store created! View it at: ${data.slug}.xrow-app.vercel.app`,
+      );
 
       // Reset form
       setFormData({
