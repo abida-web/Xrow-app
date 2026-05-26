@@ -1,4 +1,4 @@
-// app/api/products/route.ts
+// app/api/dashboard/product/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/drizzle/db";
 import { z } from "zod";
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     // Get the user's store
     const userStore = await db.query.store.findFirst({
-      where: eq(store.ownerId, session.user.id), // Assuming store has a userId field
+      where: eq(store.ownerId, session.user.id),
     });
 
     if (!userStore) {
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: "Validation failed",
-          details: error.errors,
+          details: error.issues, // FIXED: changed from 'errors' to 'issues'
         },
         { status: 400 },
       );
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: "Failed creating product",
-        details: error.message,
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
     );
