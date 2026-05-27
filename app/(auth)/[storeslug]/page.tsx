@@ -9,13 +9,13 @@ import { store } from "@/drizzle/schema";
 export default async function StorePage({
   params,
 }: {
-  params: Promise<{ storeSlug: string }>;
+  params: Promise<{ storeslug: string }>;
 }) {
-  const { storeSlug } = await params;
+  const { storeslug } = await params;
 
   // Now this will work because relations are imported
   const storeData = await db.query.store.findFirst({
-    where: eq(store.slug, storeSlug),
+    where: eq(store.slug, storeslug),
     with: {
       settings: true, // This should now work!
     },
