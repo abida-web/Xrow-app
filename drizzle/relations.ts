@@ -9,6 +9,7 @@ import {
   productTags,
   productVariants,
   store,
+  storeSettings,
   variantOptionValues,
 } from "./schema";
 
@@ -103,3 +104,18 @@ export const iventoryTransactionsRelations = relations(
     }),
   }),
 );
+export const storeRelations = relations(store, ({ one, many }) => ({
+  settings: one(storeSettings, {
+    fields: [store.id],
+    references: [storeSettings.storeId],
+  }),
+  products: many(products),
+}));
+
+// StoreSettings relations
+export const storeSettingsRelations = relations(storeSettings, ({ one }) => ({
+  store: one(store, {
+    fields: [storeSettings.storeId],
+    references: [store.id],
+  }),
+}));

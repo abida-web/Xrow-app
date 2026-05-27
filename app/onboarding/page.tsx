@@ -28,7 +28,7 @@ const OnBoarding = () => {
     const checkAuth = async () => {
       const session = await authClient.getSession();
       if (session?.data?.user.onboardingCompleted) {
-        router.push("/dashboard");
+        router.push("/");
       }
       // FIXED: Transform the user data to match User type
       const sessionUser = session?.data?.user;
