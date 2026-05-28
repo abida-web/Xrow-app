@@ -1,7 +1,7 @@
 // app/[storeslug]/page.tsx
 "use server";
 import { eq, and } from "drizzle-orm";
-import { DefaultTemplate } from "@/components/templates/DefaultTemplate";
+import DefaultTemplate from "@/components/templates/DefaultTemplate";
 import { db } from "@/drizzle/db";
 import { products } from "@/drizzle/schemas/product-schema";
 import { store } from "@/drizzle/schema";
