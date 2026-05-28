@@ -35,15 +35,6 @@ const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
   settings,
   products,
 }) => {
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }).format(price / 100);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Announcement Bar */}
@@ -59,37 +50,43 @@ const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
         </div>
       )}
 
-      {/* Hero Section */}
-      <div className="relative">
-        {settings.heroImage && (
-          <div className="h-full w-full overflow-hidden">
+      {/* Hero Section - Fixed with Tailwind only */}
+      <div className="relative w-full">
+        {/* Hero Image Container - Fixed height with Tailwind */}
+        <div className="w-full h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden">
+          {settings.heroImage && (
             <img
               src={settings.heroImage}
               alt={settings.heroTitle}
               className="w-full h-full object-cover"
             />
-          </div>
-        )}
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
-          {settings.heroSubtitle && (
-            <h1
-              className={`text-6xl max-w-2xl font-semibold ${
-                settings.heroImage ? "text-white" : "text-gray-900"
-              }`}
-            >
-              {settings.heroSubtitle}
-            </h1>
           )}
-          <button
-            className="py-1.5 mt-4 px-5 rounded-sm font-semibold"
-            style={{
-              background: settings.secondaryColor,
-              color: settings.primaryColor,
-            }}
-          >
-            Shop Now
-          </button>
+        </div>
+
+        {/* Hero Content - Centered overlay */}
+        <div className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-8 z-10">
+          <div className="max-w-7xl mx-auto w-full">
+            {settings.heroSubtitle && (
+              <h1
+                className={`
+                  text-4xl sm:text-5xl lg:text-6xl 
+                  font-semibold max-w-2xl
+                  ${settings.heroImage ? "text-white drop-shadow-lg" : "text-gray-900"}
+                `}
+              >
+                {settings.heroSubtitle}
+              </h1>
+            )}
+            <button
+              className="mt-4 px-5 py-1.5 rounded-sm font-semibold hover:opacity-90 transition-opacity"
+              style={{
+                background: settings.secondaryColor,
+                color: settings.primaryColor,
+              }}
+            >
+              Shop Now
+            </button>
+          </div>
         </div>
       </div>
 
@@ -134,12 +131,12 @@ const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
                       className="text-lg font-bold"
                       style={{ color: settings.primaryColor }}
                     >
-                      {formatPrice(product.price)}
+                      ${product.price.toFixed(2)}
                     </span>
                     {product.compareAtPrice &&
                       product.compareAtPrice > product.price && (
                         <span className="text-sm text-gray-400 line-through">
-                          {formatPrice(product.compareAtPrice)}
+                          ${product.compareAtPrice.toFixed(2)}
                         </span>
                       )}
                   </div>
@@ -161,7 +158,7 @@ const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
 
                   {/* Add to Cart Button */}
                   <button
-                    className="mt-3 w-full px-4 py-2 text-white text-sm rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                    className="mt-3 w-full px-4 py-2 text-white text-sm rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                     style={{
                       backgroundColor: settings.primaryColor,
                     }}
