@@ -21,17 +21,20 @@ export function proxy(request: NextRequest) {
   ) {
     return NextResponse.next();
   }
+  const parts = hostname.split(".");
+  if (hostname.includes("vercel.app") && parts.length >= 3) {
+    const subdomain = parts[0];
+    // Don't rewrite the main domain
+    if (subdomain !== "xrow-app" && subdomain !== "www") {
+      console.log(`✅ REWRITING: ${hostname}${path} → /${subdomain}${path}`);
 
-  // Handle store subdomains on xrow-app.vercel.app
-  if (hostname.includes("vercel.app") && !hostname.startsWith("xrow-app")) {
-    // Extract store slug from subdomain
-    // "my-store.xrow-app.vercel.app" → "my-store"
-    const storeSlug = hostname.split(".")[0];
-
-    console.log(`🏪 Rewriting subdomain: ${hostname} → /${storeSlug}${path}`);
-
-    // Rewrite to the store page with the slug
-    return NextResponse.rewrite(new URL(`/${storeSlug}${path}`, request.url));
+      // Create new URL for rewrite
+      const newUrl = new URL(
+        `/${subdomain}${path}`,
+        `https://xrow-app.vercel.app`,
+      );
+      return NextResponse.rewrite(newUrl);
+    }
   }
 
   return NextResponse.next();
