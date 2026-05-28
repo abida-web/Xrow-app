@@ -34,8 +34,8 @@ export async function POST(req: Request) {
   await db.insert(storeSettings).values({
     storeId: newStore.id,
     theme: "modern",
-    primaryColor: "#3B82F6",
-    secondaryColor: "#10B981",
+    primaryColor: "#9933ff",
+    secondaryColor: "#ddccff",
     heroTitle: `Welcome to ${newStore.name}!`,
     heroSubtitle: "Discover amazing products at great prices",
     heroImage: "/default-hero.jpg",
