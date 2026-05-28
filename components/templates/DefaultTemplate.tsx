@@ -39,46 +39,54 @@ const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
     <div className="min-h-screen bg-gray-50">
       {/* Announcement Bar */}
       {settings.announcementEnabled && settings.announcementText && (
-        <p
-          className={` text-white text-center py-2 px-4 text-sm`}
+        <div
+          className="text-white text-center py-2 px-4 text-sm"
           style={{
             background: settings.secondaryColor,
             color: settings.primaryColor,
           }}
         >
           {settings.announcementText}
-        </p>
+        </div>
       )}
 
-      {/* Hero Section */}
-      <div className="relative">
-        {settings.heroImage && (
-          <div className="h-full w-full overflow-hidden">
+      {/* Hero Section - Fixed with Tailwind only */}
+      <div className="relative w-full">
+        {/* Hero Image Container - Fixed height with Tailwind */}
+        <div className="w-full h-[400px] md:h-[500px] lg:h-[700px] overflow-hidden">
+          {settings.heroImage && (
             <img
               src={settings.heroImage}
               alt={settings.heroTitle}
-              className="w-full h-full"
+              className="w-full h-full object-cover"
             />
-          </div>
-        )}
-
-        <div className="max-w-7xl mx-auto px-4 mt-15 sm:px-6 lg:px-8 py-16 absolute top-0 left-0 right-0 z-10">
-          {settings.heroSubtitle && (
-            <h1
-              className={`text-6xl max-w-2xl font-semibold ${settings.heroImage ? "text-gray-200" : "text-gray-600"}`}
-            >
-              {settings.heroSubtitle}
-            </h1>
           )}
-          <button
-            className="py-1.5 mt-4 px-5 rounded-sm"
-            style={{
-              background: settings.secondaryColor,
-              color: settings.primaryColor,
-            }}
-          >
-            Shop Now
-          </button>
+        </div>
+
+        {/* Hero Content - Centered overlay */}
+        <div className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-8 z-10">
+          <div className="max-w-7xl mx-auto w-full">
+            {settings.heroSubtitle && (
+              <h1
+                className={`
+                  text-4xl sm:text-5xl lg:text-6xl 
+                  font-semibold md:max-w-2xl
+                  ${settings.heroImage ? "text-white drop-shadow-lg" : "text-gray-900"}
+                `}
+              >
+                {settings.heroSubtitle}
+              </h1>
+            )}
+            <button
+              className="mt-4 px-5 py-1.5 rounded-sm font-semibold hover:opacity-90 transition-opacity"
+              style={{
+                background: settings.secondaryColor,
+                color: settings.primaryColor,
+              }}
+            >
+              Shop Now
+            </button>
+          </div>
         </div>
       </div>
 
@@ -86,7 +94,9 @@ const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {products?.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500">No products available.</p>
+            <p className="text-gray-500">
+              No products available. Check back soon!
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -148,7 +158,7 @@ const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
 
                   {/* Add to Cart Button */}
                   <button
-                    className="mt-3 w-full px-4 py-2 text-white text-sm rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="mt-3 w-full px-4 py-2 text-white text-sm rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                     style={{
                       backgroundColor: settings.primaryColor,
                     }}
@@ -176,8 +186,8 @@ const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-600 text-sm">
             <p>
-              © 2024 {settings.heroTitle.replace("Welcome to ", "")} All rights
-              reserved.
+              © 2024 {settings.heroTitle?.replace("Welcome to ", "") || "Store"}{" "}
+              All rights reserved.
             </p>
             {settings.contactEmail && (
               <p className="mt-2">
