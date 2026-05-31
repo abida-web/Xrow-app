@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { CreateProductSchema } from "./types";
 import { productRepository } from "./product-repository";
+import { generateSlug } from "./utils";
 export async function createProductWithAllData(
   db: any,
   productData: z.infer<typeof CreateProductSchema>,
@@ -11,7 +12,8 @@ export async function createProductWithAllData(
     storeId: storeId, // Use storeId from session
     name: productData.name,
     description: productData.description,
-    slug: productData.slug,
+    categoryId: productData.categoryId,
+    slug: generateSlug(productData.name),
     status: productData.status || "draft",
     vendor: productData.vendor,
     productType: productData.productType,
@@ -29,7 +31,8 @@ export async function createProductWithAllData(
   // 3. Create options and option values
   const optionValueMap = new Map(); // key: "optionName:value", value: optionValueId
 
-  for (const option of productData.options) {
+  if (productData.options) {
+    for (const option of productData.options) {
     const [createdOption] = await productRepository.createOptions(db, [
       {
         productId: product.id,
@@ -53,9 +56,11 @@ export async function createProductWithAllData(
       );
     });
   }
+  }
 
   // 4. Create variants and link option values
-  for (const variant of productData.variants) {
+  if (productData.variants) {
+    for (const variant of productData.variants) {
     let imageId = null;
     if (variant.imageIndex !== undefined && images[variant.imageIndex]) {
       imageId = images[variant.imageIndex].id;
@@ -70,28 +75,32 @@ export async function createProductWithAllData(
         price: variant.price.toString(),
         inventoryQuantity: variant.inventoryQuantity,
         weight: variant.weight,
+        weightUnit: variant.weightUnit,
         imageId: imageId,
       },
     ]);
 
     // Link variant to option values
     const variantLinks = [];
-    for (let i = 0; i < productData.options.length; i++) {
-      const option = productData.options[i];
-      const optionValue = variant.optionValues[i];
-      const optionValueId = optionValueMap.get(`${option.name}:${optionValue}`);
+    if (productData.options) {
+      for (let i = 0; i < productData.options.length; i++) {
+        const option = productData.options[i];
+        const optionValue = variant.optionValues[i];
+        const optionValueId = optionValueMap.get(`${option.name}:${optionValue}`);
 
-      if (optionValueId) {
-        variantLinks.push({
-          variantId: createdVariant.id,
-          optionValueId: optionValueId,
-        });
+        if (optionValueId) {
+          variantLinks.push({
+            variantId: createdVariant.id,
+            optionValueId: optionValueId,
+          });
+        }
       }
     }
 
     if (variantLinks.length > 0) {
       await productRepository.createVarientLinks(db, variantLinks);
     }
+  }
   }
 
   // 5. Create tags

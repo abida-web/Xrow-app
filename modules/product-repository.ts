@@ -1,4 +1,5 @@
 import {
+  categories,
   productImages,
   productOptions,
   productOptionsValues,
@@ -10,6 +11,9 @@ import {
 
 // product-repository.ts
 export const productRepository = {
+  async createCategory(db: any, data: any) {
+    return db.insert(categories).values(data).returning();
+  },
   async createProduct(db: any, data: any) {
     const [product] = await db.insert(products).values(data).returning();
     return product;

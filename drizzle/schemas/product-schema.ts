@@ -9,7 +9,11 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { store } from "./store-schema";
-
+export const categories = pgTable("categories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 export const products = pgTable("products", {
   id: uuid("id").defaultRandom().primaryKey(),
   storeId: uuid("store_id")
@@ -17,6 +21,8 @@ export const products = pgTable("products", {
       onDelete: "cascade",
     })
     .notNull(),
+  categoryId: uuid("category_id") // 👈 ADD THIS LINE
+    .references(() => categories.id, { onDelete: "set null" }), // 👈 ADD THIS LINE
   name: text("name").notNull(),
   description: text("description"),
   slug: text("slug").notNull(),
@@ -47,6 +53,7 @@ export const productVariants = pgTable("product_variants", {
   price: numeric("price").notNull(),
   inventoryQuantity: integer("inventory_quantity"),
   weight: real("weight"),
+  weightUnit: text("weight_unit"),
   imageId: uuid("image_id").references(() => productImages.id),
   createAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

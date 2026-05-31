@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { auth } from "./auth";
 import { redirect } from "next/navigation";
 
-async function adminGaurd() {
+export async function adminGaurd() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
