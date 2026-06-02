@@ -1,3 +1,4 @@
+import { Product } from "@/types";
 import { create } from "zustand";
 import { shallow } from "zustand/shallow";
 
@@ -17,6 +18,12 @@ interface ProductFormData {
   options: any[];
   variants: any[];
   tags: string[];
+}
+
+interface ProductsPageProps {
+  params: Promise<{
+    storeslug: string;
+  }>;
 }
 
 interface ProductStore {
@@ -87,7 +94,6 @@ export const useProductStore = create<ProductStore>()((set, get) => ({
   isLoading: false,
   uploadProgress: {},
 
-  // Individual setters for better performance
   setName: (name) =>
     set((state) => ({
       formData: { ...state.formData, name },

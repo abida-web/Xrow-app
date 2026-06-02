@@ -31,7 +31,7 @@ interface CategoryProps {
 const NewPage = () => {
   const router = useRouter();
   const [categories, setCategories] = useState<CategoryProps[]>([]);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   // Selective subscriptions - only subscribe to what this component needs
   const formData = useProductStore((state) => state.formData);
   const setFormData = useProductStore((state) => state.setFormData);
@@ -51,7 +51,7 @@ const NewPage = () => {
       const { name, value } = e.target;
       // Use updateField for single field updates (more efficient)
       updateField(name as keyof typeof formData, value);
-      
+
       // Auto-generate slug when name changes
       if (name === "name") {
         updateField("slug", generateSlug(value));
@@ -84,6 +84,7 @@ const NewPage = () => {
   // Memoized submit handler
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
+      setIsSubmitting(true);
       e.preventDefault();
       const res = await fetch("/api/dashboard/product", {
         method: "POST",
@@ -94,7 +95,7 @@ const NewPage = () => {
       });
       if (res.ok) {
         toast.success("Product Added successfully");
-        router.push("/dashboard/products");
+        setIsSubmitting(false);
       } else {
         toast.error("Failed to add product");
       }
@@ -296,6 +297,7 @@ const NewPage = () => {
         </Card>
 
         <Button
+          disabled={isSubmitting === true}
           type="submit"
           className="text-sm bg-[#06102c] text-white px-3 py-1 rounded hover:bg-[#030d27]"
         >

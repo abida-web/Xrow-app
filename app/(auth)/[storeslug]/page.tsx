@@ -22,10 +22,10 @@ export default async function StorePage({
     name: product.name || "Untitled Product",
     description: product.description || "",
     slug: product.slug || product.id,
-    price: product.price || 0,
-    compareAtPrice: product.compareAtPrice || null,
-    thumbnail: product.thumbnail || "/placeholder-image.jpg",
-    stock: product.stock || 0,
+    price: product.variants?.[0]?.price || 0,
+    compareAtPrice: product.variants?.[0]?.compareAtPrice || null,
+    thumbnail: product.images?.[0]?.url || "/placeholder-image.jpg",
+    stock: product.variants?.[0]?.inventoryQuantity || 0,
     status: product.status || "active",
   }));
 
