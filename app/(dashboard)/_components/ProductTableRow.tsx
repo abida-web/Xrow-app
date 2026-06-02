@@ -2,6 +2,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Product } from "@/types";
 import { ParamValue } from "next/dist/server/request/params";
+import Link from "next/link";
 import React from "react";
 
 interface RowProps {
@@ -77,7 +78,7 @@ const ProductTableRow = ({
   return (
     <TableRow
       data-state={isSelected ? "selected" : undefined}
-      className="hover:bg-gray-50 transition-colors text-xs"
+      className="hover:bg-gray-50 transition-colors text-xs group"
     >
       <TableCell className="w-10">
         <Checkbox
@@ -89,7 +90,10 @@ const ProductTableRow = ({
 
       {visibleColumns.product && (
         <TableCell className="font-medium">
-          <div className="flex items-center gap-3 min-w-[200px]">
+          <Link
+            href={`/dashboard/${storeslug}/products/${product.id}`}
+            className="flex items-center gap-3 min-w-[200px] group-hover:text-blue-600 transition-colors"
+          >
             {product.images?.[0]?.url && (
               <img
                 src={product.images[0].url}
@@ -99,7 +103,7 @@ const ProductTableRow = ({
               />
             )}
             <span className="line-clamp-2 break-words">{product.name}</span>
-          </div>
+          </Link>
         </TableCell>
       )}
 

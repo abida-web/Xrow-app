@@ -1,3 +1,4 @@
+"use server";
 import { db } from "@/drizzle/db";
 import { products, store } from "@/drizzle/schema";
 import { auth } from "@/lib/auth";
