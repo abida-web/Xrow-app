@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  categories,
   collections,
   inventoryTransactions,
   productImages,
@@ -12,12 +13,19 @@ import {
   storeSettings,
   variantOptionValues,
 } from "./schema";
-
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  products: many(products),
+}));
 export const productsRelations = relations(products, ({ one, many }) => ({
   store: one(store, {
     fields: [products.storeId],
     references: [store.id],
   }),
+  category: one(categories, {
+    fields: [products.categoryId],
+    references: [categories.id],
+  }),
+
   images: many(productImages),
   variants: many(productVariants),
   options: many(productOptions),

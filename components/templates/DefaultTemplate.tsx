@@ -1,4 +1,4 @@
-import React from "react";
+"use client";
 
 // Product Type
 type Product = {
@@ -105,7 +105,7 @@ const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
                 key={product.id}
                 className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
               >
-                {/* Product Image */}
+                {/* Product Image - Fixed to use thumbnail */}
                 <div className="aspect-square bg-gray-100 overflow-hidden">
                   <img
                     src={product.thumbnail}
@@ -156,21 +156,24 @@ const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
                     </div>
                   )}
 
-                  {/* Add to Cart Button */}
+                  {/* Add to Cart Button - Fixed hover to maintain text color */}
                   <button
-                    className="mt-3 w-full px-4 py-2 text-white text-sm rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="mt-3 w-full px-4 py-2 rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                     style={{
                       backgroundColor: settings.primaryColor,
+                      color: "#ffffff",
                     }}
                     disabled={product.stock === 0}
-                    onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) =>
-                      (e.currentTarget.style.backgroundColor =
-                        settings.secondaryColor)
-                    }
-                    onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) =>
-                      (e.currentTarget.style.backgroundColor =
-                        settings.primaryColor)
-                    }
+                    onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                      e.currentTarget.style.backgroundColor =
+                        settings.secondaryColor;
+                      e.currentTarget.style.color = settings.primaryColor;
+                    }}
+                    onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                      e.currentTarget.style.backgroundColor =
+                        settings.primaryColor;
+                      e.currentTarget.style.color = "#ffffff";
+                    }}
                   >
                     {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
                   </button>

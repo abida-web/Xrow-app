@@ -41,3 +41,15 @@ export interface SessionData {
     session?: unknown;
   };
 }
+interface Product {
+  id: string;
+  name: string;
+  status: string;
+  images?: Array<{ url: string }>;
+  variants?: Array<{ inventoryQuantity?: number; price?: number }>;
+  category?: { name: string };
+  productType?: string;
+  vendor?: string;
+  createAt?: string;
+  updatedAt?: string;
+}

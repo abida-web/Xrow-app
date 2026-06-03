@@ -124,3 +124,14 @@ export const CURRENCIES = [
   { code: "SEK", name: "Swedish Krona", symbol: "kr" },
   { code: "AED", name: "UAE Dirham", symbol: "د.إ" },
 ];
+export const COLUMNS = [
+  { id: "product", label: "Product", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "inventory", label: "Inventory", defaultVisible: true },
+  { id: "category", label: "Category", defaultVisible: true },
+  { id: "channels", label: "Channels", defaultVisible: true },
+  { id: "productType", label: "Product type", defaultVisible: true },
+  { id: "vendor", label: "Vendor", defaultVisible: true },
+  { id: "created", label: "Created", defaultVisible: true },
+  { id: "updated", label: "Updated", defaultVisible: true },
+];

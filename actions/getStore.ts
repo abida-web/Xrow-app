@@ -20,6 +20,10 @@ export async function getStore(storeslug: string) {
         eq(products.storeId, storeData.id),
         eq(products.status, "active"),
       ),
+      with: {
+        images: true,
+        variants: true,
+      },
       limit: 20,
     });
 
