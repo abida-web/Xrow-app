@@ -5,10 +5,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { storeslug: string } },
+  { params }: { params: Promise<{ storeslug: string }> }, // params is a Promise
 ) {
   try {
-    const { storeslug } = await params;
+    const { storeslug } = await params; // AWAIT the params
 
     // Get store by slug
     const storeData = await db.query.store.findFirst({
@@ -27,6 +27,7 @@ export async function GET(
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = 20;
     const offset = (page - 1) * limit;
+
     const filters: SQL<unknown>[] = [eq(products.storeId, storeData.id)];
 
     if (search) {

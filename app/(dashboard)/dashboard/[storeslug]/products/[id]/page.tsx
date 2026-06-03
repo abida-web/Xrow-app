@@ -13,25 +13,12 @@ const ProductEditPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Fetch product data
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const productData = await getProduct(id as string);
-
-        // TRANSFORM: Convert tag objects to strings
-        const transformedData = {
-          ...productData,
-          tags:
-            productData.tags?.map((tagObj: any) => {
-              // Extract the actual tag string from the object
-              return tagObj.tag || tagObj.name || String(tagObj);
-            }) || [],
-        };
-
-        console.log("Original tags:", productData.tags);
-        console.log("Transformed tags:", transformedData.tags);
-
-        setProduct(transformedData);
+        setProduct(productData);
       } catch (error) {
         console.error("Error fetching product:", error);
         toast.error("Failed to load product");
@@ -50,23 +37,13 @@ const ProductEditPage = () => {
     async (formData: any) => {
       setIsSubmitting(true);
 
-      // If you need to save back as objects, transform strings back to objects
-      const dataToSend = {
-        ...formData,
-        tags:
-          formData.tags?.map((tagString: string) => ({
-            tag: tagString,
-            productId: id,
-          })) || [],
-      };
-
       try {
         const res = await fetch(`/api/dashboard/product/${id}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(dataToSend),
+          body: JSON.stringify(formData), // Send the form data from the store
         });
 
         if (res.ok) {
