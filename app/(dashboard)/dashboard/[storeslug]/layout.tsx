@@ -53,7 +53,7 @@ const StoreLayout = async ({
 
         {/* Main content - always takes remaining space */}
         <main className="flex-1 overflow-auto">
-          <div className="p-4 md:p-8">{children}</div>
+          <div className="p-3">{children}</div>
         </main>
       </div>
     </div>

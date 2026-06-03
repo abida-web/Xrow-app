@@ -193,6 +193,8 @@ const ProductsPage = () => {
     [],
   );
 
+  const anchor = useComboboxAnchor();
+
   return (
     <div>
       <div className="flex items-center justify-between">
