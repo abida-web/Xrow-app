@@ -5,10 +5,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ storeslug: string }> }, // params is a Promise
+  { params }: { params: Promise<{ storeslug: string }> },
 ) {
   try {
-    const { storeslug } = await params; // AWAIT the params
+    const { storeslug } = await params;
 
     // Get store by slug
     const storeData = await db.query.store.findFirst({
@@ -31,20 +31,25 @@ export async function GET(
     const filters: SQL<unknown>[] = [eq(products.storeId, storeData.id)];
 
     if (search) {
-      filters.push(
-        or(
-          ilike(products.name, `%${search}%`),
-          ilike(products.vendor, `%${search}%`),
-          ilike(products.productType, `%${search}%`),
-        ),
+      // Use a non-null assertion or check if or returns a value
+      const searchCondition = or(
+        ilike(products.name, `%${search}%`),
+        ilike(products.vendor, `%${search}%`),
+        ilike(products.productType, `%${search}%`),
       );
+      if (searchCondition) {
+        filters.push(searchCondition);
+      }
     }
+
     if (status && status !== "all") {
       filters.push(eq(products.status, status));
     }
+
     if (vendor) {
       filters.push(eq(products.vendor, vendor));
     }
+
     if (productType) {
       filters.push(eq(products.productType, productType));
     }
