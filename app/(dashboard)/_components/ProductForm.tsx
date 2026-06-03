@@ -28,7 +28,7 @@ interface CategoryProps {
 }
 
 interface ProductFormProps {
-  onSubmit: (e: React.FormEvent) => Promise<void>;
+  onSubmit: (formData: any) => Promise<void>;
   isSubmitting?: boolean;
   initialData?: any; // Optional - if provided, use for editing
 }
