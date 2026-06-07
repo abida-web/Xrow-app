@@ -1,6 +1,5 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { TableCell, TableRow } from "@/components/ui/table";
-
 import { Product } from "@/types";
 import { ParamValue } from "next/dist/server/request/params";
 import React from "react";
@@ -9,7 +8,7 @@ interface RowProps {
   product: Product;
   selectRow: Set<string>;
   storeslug: ParamValue;
-  onCheckedChange: (checked: any) => void;
+  onCheckedChange: (checked: boolean) => void;
   visibleColumns: {
     product: boolean;
     status: boolean;
@@ -20,7 +19,7 @@ interface RowProps {
     vendor: boolean;
     created: boolean;
     updated: boolean;
-    catalogs: boolean; // ✅ Add this
+    catalogs: boolean;
   };
 }
 
@@ -32,9 +31,40 @@ const ProductTableRow = ({
   visibleColumns,
 }: RowProps) => {
   const isSelected = selectRow.has(product.id);
-
-  // ✅ Get catalogs from product (API already transforms catalogProducts to catalogs)
   const catalogs = product.catalogs || [];
+
+  // Helper function to parse inventory quantity safely
+  const parseInventoryQuantity = (
+    value: string | number | undefined | null,
+  ): number | null => {
+    if (value === undefined || value === null || value === "") return null;
+    const parsed = typeof value === "string" ? parseInt(value, 10) : value;
+    return isNaN(parsed) ? null : parsed;
+  };
+
+  // Memoized inventory text to prevent recalculation on every render
+  const inventoryText = React.useMemo(() => {
+    const firstVariant = product.variants?.[0];
+    const rawQuantity = firstVariant?.inventoryQuantity;
+    const quantity = parseInventoryQuantity(rawQuantity);
+
+    if (quantity === null) return "N/A";
+    if (quantity === 0) return "Out of stock";
+    if (quantity < 10) return `${quantity} in stock (low)`;
+    return `${quantity} in stock`;
+  }, [product.variants?.[0]?.inventoryQuantity]);
+
+  // Memoized inventory status for styling
+  const inventoryStatus = React.useMemo(() => {
+    const firstVariant = product.variants?.[0];
+    const rawQuantity = firstVariant?.inventoryQuantity;
+    const quantity = parseInventoryQuantity(rawQuantity);
+
+    if (quantity === null) return "unknown";
+    if (quantity === 0) return "out_of_stock";
+    if (quantity < 10) return "low_stock";
+    return "in_stock";
+  }, [product.variants?.[0]?.inventoryQuantity]);
 
   const getStatusBadge = () => {
     const statusConfig: Record<string, { class: string; label: string }> = {
@@ -57,15 +87,7 @@ const ProductTableRow = ({
       </span>
     );
   };
-  const getInventoryText = () => {
-    const firstVariant = product.variants?.[0];
-    const quantity = firstVariant?.inventoryQuantity;
 
-    if (quantity === undefined || quantity === null) return "N/A";
-    if (quantity === 0) return "Out of stock";
-    if (quantity < 10) return `${quantity} in stock (low)`;
-    return `${quantity} in stock`;
-  };
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
     try {
@@ -76,6 +98,20 @@ const ProductTableRow = ({
       });
     } catch {
       return "Invalid date";
+    }
+  };
+
+  // Get inventory cell styling
+  const getInventoryClassName = () => {
+    switch (inventoryStatus) {
+      case "out_of_stock":
+        return "text-red-600 font-medium";
+      case "low_stock":
+        return "text-yellow-600 font-medium";
+      case "in_stock":
+        return "text-green-600";
+      default:
+        return "text-gray-500";
     }
   };
 
@@ -101,6 +137,10 @@ const ProductTableRow = ({
                 alt={product.name}
                 className="w-10 h-10 rounded-md object-cover bg-gray-100 flex-shrink-0"
                 loading="lazy"
+                onError={(e) => {
+                  // Handle image load error
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
               />
             )}
             <span className="line-clamp-2 break-words">{product.name}</span>
@@ -112,15 +152,7 @@ const ProductTableRow = ({
 
       {visibleColumns.inventory && (
         <TableCell className="whitespace-nowrap">
-          <span
-            className={
-              product.variants?.[0]?.inventoryQuantity === 0
-                ? "text-red-600"
-                : ""
-            }
-          >
-            {getInventoryText()}
-          </span>
+          <span className={getInventoryClassName()}>{inventoryText}</span>
         </TableCell>
       )}
 
@@ -146,7 +178,6 @@ const ProductTableRow = ({
         </TableCell>
       )}
 
-      {/* ✅ Add Catalogs Column */}
       {visibleColumns.catalogs && (
         <TableCell>
           <div className="flex flex-wrap gap-1 max-w-[200px]">
@@ -154,9 +185,12 @@ const ProductTableRow = ({
               catalogs.map((catalog: any) => (
                 <span
                   key={catalog.id}
-                  className="text-xs bg-blue-100 text-blue-800 hover:bg-blue-100"
+                  className="inline-flex px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
+                  title={catalog.name}
                 >
-                  {catalog.name}
+                  {catalog.name.length > 20
+                    ? `${catalog.name.substring(0, 20)}...`
+                    : catalog.name}
                 </span>
               ))
             ) : (
