@@ -103,7 +103,7 @@ const ProductsPage = () => {
   ]);
   useEffect(() => {
     fetchCollections();
-  }, [storeslug, page]);
+  }, [storeslug]);
 
   // Fetch catalogs on mount
   useEffect(() => {
