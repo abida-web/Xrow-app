@@ -12,9 +12,32 @@ import {
 } from "lucide-react";
 
 export const sidebarItems = [
-  { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  {
+    id: "dashboard",
+    icon: LayoutDashboard,
+    label: "Dashboard",
+  },
   { id: "orders", icon: ShoppingCart, label: "Orders" },
-  { id: "products", icon: Package, label: "Products" },
+  {
+    id: "products",
+    icon: Package,
+    label: "Products",
+    subMenus: [
+      {
+        id: "collections",
+        label: "Collections",
+        path: "/products/collections",
+      },
+      { id: "inventory", label: "Inventory", path: "/products/inventory" },
+      {
+        id: "purchase-orders",
+        label: "Purchase orders",
+        path: "/products/purchase-orders",
+      },
+      { id: "transfers", label: "Transfers", path: "/products/transfers" },
+      { id: "gift-cards", label: "Gift cards", path: "/products/gift-cards" },
+    ],
+  },
   { id: "customers", icon: Users, label: "Customers" },
   { id: "marketing", icon: Megaphone, label: "Marketing" },
   { id: "discounts", icon: Tag, label: "Discounts" },

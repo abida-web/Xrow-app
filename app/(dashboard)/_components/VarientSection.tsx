@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useProductStore } from "@/stores/product-store";
+import { useProductStore } from "@/stores/product-create-store";
 
 export const VariantsSection = () => {
   const variants = useProductStore((state) => state.formData.variants);
@@ -56,9 +56,7 @@ export const VariantsSection = () => {
                   type="text"
                   placeholder="Variant name"
                   value={variant.name}
-                  onChange={(e) =>
-                    updateVariant(index, "name", e.target.value)
-                  }
+                  onChange={(e) => updateVariant(index, "name", e.target.value)}
                 />
               </div>
 
@@ -70,7 +68,11 @@ export const VariantsSection = () => {
                     placeholder="0.00"
                     value={variant.price}
                     onChange={(e) =>
-                      updateVariant(index, "price", parseFloat(e.target.value) || 0)
+                      updateVariant(
+                        index,
+                        "price",
+                        parseFloat(e.target.value) || 0,
+                      )
                     }
                   />
                 </div>
@@ -150,7 +152,9 @@ export const VariantsSection = () => {
                       updateVariant(
                         index,
                         "imageIndex",
-                        e.target.value === "" ? undefined : parseInt(e.target.value),
+                        e.target.value === ""
+                          ? undefined
+                          : parseInt(e.target.value),
                       )
                     }
                     className="border rounded px-2 py-1 text-sm w-full"
@@ -177,18 +181,26 @@ export const VariantsSection = () => {
                         <select
                           value={variant.optionValues?.[optIndex] || ""}
                           onChange={(e) => {
-                            const newOptionValues = [...(variant.optionValues || [])];
+                            const newOptionValues = [
+                              ...(variant.optionValues || []),
+                            ];
                             newOptionValues[optIndex] = e.target.value;
-                            updateVariant(index, "optionValues", newOptionValues);
+                            updateVariant(
+                              index,
+                              "optionValues",
+                              newOptionValues,
+                            );
                           }}
                           className="border rounded px-2 py-1 text-sm flex-1"
                         >
                           <option value="">Select value</option>
-                          {option.values.map((value: string, valIndex: number) => (
-                            <option key={valIndex} value={value}>
-                              {value}
-                            </option>
-                          ))}
+                          {option.values.map(
+                            (value: string, valIndex: number) => (
+                              <option key={valIndex} value={value}>
+                                {value}
+                              </option>
+                            ),
+                          )}
                         </select>
                       </div>
                     ))}

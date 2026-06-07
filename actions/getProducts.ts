@@ -24,6 +24,11 @@ export async function getAllproducts(storeslug: string) {
       images: true,
       category: true,
       variants: true,
+      catalogProducts: {
+        with: {
+          catalog: true,
+        },
+      },
     },
   });
 

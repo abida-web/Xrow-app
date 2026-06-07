@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/drizzle/db";
 import { z } from "zod";
-import { store } from "@/drizzle/schema";
+import { productSalesChannels, salesChannels, store } from "@/drizzle/schema";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -38,7 +38,17 @@ export async function POST(request: NextRequest) {
       validatedData,
       userStore.id,
     );
-
+    const onlineChannel = await db.query.salesChannels.findFirst({
+      where: and(),
+    });
+    if (onlineChannel) {
+      await db.insert(productSalesChannels).values({
+        productId: product.id,
+        channelId: onlineChannel.id,
+        isPublished: true,
+        publishedAt: new Date(),
+      });
+    }
     return NextResponse.json({ success: true, product }, { status: 201 });
   } catch (error) {
     console.error("Failed creating product:", error);

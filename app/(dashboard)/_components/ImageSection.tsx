@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useProductStore } from "@/stores/product-store";
+import { useProductStore } from "@/stores/product-create-store";
 import { useCallback } from "react";
 export const ImagesSection = () => {
   const previewUrls = useProductStore((state) => state.previewUrls);

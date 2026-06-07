@@ -1,6 +1,9 @@
 import { relations } from "drizzle-orm";
 import {
+  catalogProducts,
+  catalogs,
   categories,
+  collectionProducts,
   collections,
   inventoryTransactions,
   productImages,
@@ -30,7 +33,8 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   variants: many(productVariants),
   options: many(productOptions),
   tags: many(productTags),
-  collections: many(collections),
+  collectionProducts: many(collectionProducts),
+  catalogProducts: many(catalogProducts),
 }));
 export const productImagesRelations = relations(
   productImages,
@@ -46,7 +50,7 @@ export const productVarientsRelations = relations(
   productVariants,
   ({ one, many }) => ({
     product: one(products, {
-      fields: [productVariants.id],
+      fields: [productVariants.productId],
       references: [products.id],
     }),
     image: one(productImages, {
@@ -101,8 +105,21 @@ export const collectionsRelations = relations(collections, ({ one, many }) => ({
     fields: [collections.storeId],
     references: [store.id],
   }),
-  products: many(products),
+  collectionProducts: many(collectionProducts), // ✅ This is correct
 }));
+export const collectionProductsRelations = relations(
+  collectionProducts,
+  ({ one }) => ({
+    collection: one(collections, {
+      fields: [collectionProducts.collectionId],
+      references: [collections.id],
+    }),
+    product: one(products, {
+      fields: [collectionProducts.productId],
+      references: [products.id],
+    }),
+  }),
+);
 export const iventoryTransactionsRelations = relations(
   inventoryTransactions,
   ({ one }) => ({
@@ -118,6 +135,7 @@ export const storeRelations = relations(store, ({ one, many }) => ({
     references: [storeSettings.storeId],
   }),
   products: many(products),
+  catalogs: many(catalogs),
 }));
 
 // StoreSettings relations
@@ -127,3 +145,27 @@ export const storeSettingsRelations = relations(storeSettings, ({ one }) => ({
     references: [store.id],
   }),
 }));
+export const catalogsRelations = relations(catalogs, ({ one, many }) => ({
+  // Relation to Store
+  store: one(store, {
+    fields: [catalogs.storeId],
+    references: [store.id],
+  }),
+  // Relation to CatalogProducts (junction table)
+  catalogProducts: many(catalogProducts),
+}));
+
+// CatalogProducts relations (junction table)
+export const catalogProductsRelations = relations(
+  catalogProducts,
+  ({ one }) => ({
+    catalog: one(catalogs, {
+      fields: [catalogProducts.catalogId],
+      references: [catalogs.id],
+    }),
+    product: one(products, {
+      fields: [catalogProducts.productId],
+      references: [products.id],
+    }),
+  }),
+);

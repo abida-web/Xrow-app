@@ -10,7 +10,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { serviceCards } from "../constants/services";
+import { serviceCards } from "@/app/constants/services";
 import FAQ from "@/components/FAQ";
 import GeneralButton from "@/components/GeneralButton";
 const Home = () => {

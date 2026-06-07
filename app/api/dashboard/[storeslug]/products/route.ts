@@ -1,3 +1,4 @@
+// app/api/dashboard/[storeslug]/products/route.ts
 import { db } from "@/drizzle/db";
 import { products, store } from "@/drizzle/schema";
 import { and, eq, ilike, or, SQL } from "drizzle-orm";
@@ -10,7 +11,6 @@ export async function GET(
   try {
     const { storeslug } = await params;
 
-    // Get store by slug
     const storeData = await db.query.store.findFirst({
       where: eq(store.slug, storeslug),
     });
@@ -31,7 +31,6 @@ export async function GET(
     const filters: SQL<unknown>[] = [eq(products.storeId, storeData.id)];
 
     if (search) {
-      // Use a non-null assertion or check if or returns a value
       const searchCondition = or(
         ilike(products.name, `%${search}%`),
         ilike(products.vendor, `%${search}%`),
@@ -59,12 +58,53 @@ export async function GET(
       with: {
         category: true,
         images: true,
+        variants: {
+          columns: {
+            inventoryQuantity: true,
+            price: true,
+            // Add any other variant fields you need
+          },
+        },
+        catalogProducts: {
+          with: {
+            catalog: true,
+          },
+        },
       },
       limit,
       offset,
     });
 
-    return NextResponse.json({ products: data });
+    // Transform to match your Product type exactly
+    const transformedProducts = data.map((product) => ({
+      id: product.id,
+      name: product.name,
+      status: product.status,
+      images: product.images,
+      variants:
+        product.variants?.map((variant) => ({
+          inventoryQuantity: variant.inventoryQuantity
+            ? parseFloat(variant.inventoryQuantity)
+            : undefined,
+          price: variant.price ?? undefined,
+        })) || [],
+      category: product.category ? { name: product.category.name } : undefined,
+      productType: product.productType ?? undefined,
+      vendor: product.vendor ?? undefined,
+      createAt: product.createAt?.toISOString(),
+      updatedAt: product.updatedAt?.toISOString(),
+      catalogs:
+        product.catalogProducts
+          ?.filter((cp: any) => cp.isAtCatalog === true)
+          .map((cp: any) => ({
+            id: cp.catalog.id,
+            name: cp.catalog.name,
+            handle: cp.catalog.handle,
+            type: cp.catalog.type,
+          })) || [],
+    }));
+
+    return NextResponse.json({ products: transformedProducts });
   } catch (error) {
     console.error("Error:", error);
     return NextResponse.json(

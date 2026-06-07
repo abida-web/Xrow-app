@@ -1,61 +1,81 @@
-// stores/products-filter.ts
-import { Product } from "@/types";
-import { toast } from "sonner";
+// stores/products-store.ts
+import { CatalogProps, Collection, Product } from "@/types";
 import { create } from "zustand";
+import { toast } from "sonner";
+import { deleteProducts } from "@/actions/deleteProduct";
+import { updatedProductStatus } from "@/actions/updateProductStatus";
+import { updateSalesChannelStatus } from "@/actions/salesChanel";
+import { getAllCatalogs } from "@/actions/getCatlaogs";
+import { addProductToCatalog } from "@/actions/addProductToCatalog";
+import { excludeFromCatalog } from "@/actions/deleteFromCatalog";
+import { addProductsToCollection } from "@/actions/addProductsToCollection";
+import { removeFromCollection } from "@/actions/deleteFromCollection";
 
-interface ProductFilter {
+export interface VisibleColumns {
+  product: boolean;
+  status: boolean;
+  inventory: boolean;
+  category: boolean;
+  channels: boolean;
+  productType: boolean;
+  vendor: boolean;
+  created: boolean;
+  updated: boolean;
+  catalogs: boolean;
+}
+
+interface ProductsStore {
   // State
   products: Product[];
+  loading: boolean;
+  selectRow: Set<string>;
+  visibleColumns: VisibleColumns;
+  catalogs: CatalogProps[]; // Replace with CatalogProps type
+  collections: Collection[];
+
+  // Filter state
   selectedStatus: string;
   search: string;
   selectedCategory: string[];
   vendor: string[];
   productType: string[];
   page: number;
-  loading: boolean;
   openFilterDropdown: boolean;
-  selectRow: Set<string>;
-  visibleColumns: {
-    product: boolean;
-    status: boolean;
-    inventory: boolean;
-    category: boolean;
-    channels: boolean;
-    productType: boolean;
-    vendor: boolean;
-    created: boolean;
-    updated: boolean;
-    catalogs: boolean;
-  };
-  catalogs: any[]; // Replace 'any' with your CatalogProps type
 
-  // Actions
-  setProducts: (products: Product[]) => void;
-  setSelectedStatus: (selectedStatus: string) => void;
+  // Computed values (as getters)
+  getStatuses: () => string[];
+  getVendors: () => string[];
+  getProductTypes: () => string[];
+  getCategories: () => string[];
+  getSelectAll: () => boolean;
+
+  // Actions - Filter setters (with auto page reset)
+  setSelectedStatus: (status: string) => void;
   setSearch: (search: string) => void;
-  setSelectedCategory: (selectedCategory: string[]) => void;
-  setVendor: (vendor: string[]) => void;
-  setProductType: (productType: string[]) => void;
+  setSelectedCategory: (categories: string[]) => void;
+  setVendor: (vendors: string[]) => void;
+  setProductType: (types: string[]) => void;
   setPage: (page: number) => void;
-  setLoading: (loading: boolean) => void;
   setOpenFilterDropdown: (open: boolean) => void;
+  setCollections: (collections: Collection[]) => void;
+  // Actions - Product management
+  setProducts: (products: Product[]) => void;
+  setLoading: (loading: boolean) => void;
+  fetchProducts: (storeslug: string) => Promise<void>;
+  fetchCollections: () => Promise<void>;
+
+  // Actions - Row selection
   setSelectRow: (
     selectRow: Set<string> | ((prev: Set<string>) => Set<string>),
   ) => void;
-  toggleColumnVisible: (columnId: string) => void;
-  setCatalogs: (catalogs: any[]) => void;
-
-  // Computed values
-  statuses: string[];
-  vendors: string[];
-  productTypes: string[];
-  categories: string[];
-  selectAll: boolean;
-
-  // Async actions
-  fetchProducts: (storeslug: string) => Promise<void>;
   handleSelectAll: (checked: boolean) => void;
   handleSelectRows: (id: string, checked: boolean | "indeterminate") => void;
+  clearSelection: () => void;
+
+  // Actions - Column visibility
+  toggleColumnVisible: (columnId: keyof VisibleColumns) => void;
+
+  // Actions - Bulk operations
   bulkDeleteProducts: (storeslug: string) => Promise<void>;
   handleProductStatusUpdate: (
     status: string,
@@ -65,6 +85,8 @@ interface ProductFilter {
     status: boolean,
     storeslug: string,
   ) => Promise<void>;
+
+  // Actions - Catalog operations
   fetchCatalogs: () => Promise<void>;
   handleAssignProductToCatalog: (
     catalogId: string,
@@ -74,20 +96,23 @@ interface ProductFilter {
     catalogId: string,
     storeslug: string,
   ) => Promise<void>;
+  handleAssignProductToCollection: (
+    collectionId: string,
+    storeslug: string,
+  ) => Promise<void>;
+  handleRemoveProductFromCollections: (
+    collectionId: string,
+    storeslug: string,
+  ) => Promise<void>;
+  // Actions - Reset
   resetFilters: () => void;
+  resetAll: () => void;
 }
 
-export const useProductFilter = create<ProductFilter>()((set, get) => ({
-  // Initial state
+export const useProductsStore = create<ProductsStore>()((set, get) => ({
+  // Initial State
   products: [],
-  selectedStatus: "all",
-  search: "",
-  selectedCategory: [],
-  vendor: [],
-  productType: [],
-  page: 1,
   loading: true,
-  openFilterDropdown: false,
   selectRow: new Set<string>(),
   visibleColumns: {
     product: true,
@@ -102,66 +127,58 @@ export const useProductFilter = create<ProductFilter>()((set, get) => ({
     catalogs: true,
   },
   catalogs: [],
-
-  // Basic setters
-  setProducts: (products) => set({ products }),
-  setSelectedStatus: (selectedStatus) => set({ selectedStatus, page: 1 }),
-  setSearch: (search) => set({ search, page: 1 }),
-  setSelectedCategory: (selectedCategory) => set({ selectedCategory, page: 1 }),
-  setVendor: (vendor) => set({ vendor, page: 1 }),
-  setProductType: (productType) => set({ productType, page: 1 }),
-  setPage: (page) => set({ page }),
-  setLoading: (loading) => set({ loading }),
-  setOpenFilterDropdown: (openFilterDropdown) => set({ openFilterDropdown }),
-  setSelectRow: (selectRow) => {
-    if (typeof selectRow === "function") {
-      set((state) => ({ selectRow: selectRow(state.selectRow) }));
-    } else {
-      set({ selectRow });
-    }
-  },
-  toggleColumnVisible: (columnId) => {
-    set((state) => ({
-      visibleColumns: {
-        ...state.visibleColumns,
-        [columnId]:
-          !state.visibleColumns[columnId as keyof typeof state.visibleColumns],
-      },
-    }));
-  },
-  setCatalogs: (catalogs) => set({ catalogs }),
+  collections: [],
+  selectedStatus: "all",
+  search: "",
+  selectedCategory: [],
+  vendor: [],
+  productType: [],
+  page: 1,
+  openFilterDropdown: false,
 
   // Computed values
-  get statuses() {
+  getStatuses: () => {
     const { products } = get();
     return ["all", ...new Set(products.map((p: any) => p.status))];
   },
 
-  get vendors() {
+  getVendors: () => {
     const { products } = get();
     return [...new Set(products.map((p: any) => p.vendor).filter(Boolean))];
   },
 
-  get productTypes() {
+  getProductTypes: () => {
     const { products } = get();
     return [
       ...new Set(products.map((p: any) => p.productType).filter(Boolean)),
     ];
   },
 
-  get categories() {
+  getCategories: () => {
     const { products } = get();
     return [
       ...new Set(products.map((p: any) => p.category?.name).filter(Boolean)),
     ];
   },
 
-  get selectAll() {
+  getSelectAll: () => {
     const { selectRow, products } = get();
     return selectRow.size === products.length && products.length > 0;
   },
 
-  // Async actions
+  // Filter setters (reset page to 1)
+  setSelectedStatus: (selectedStatus) => set({ selectedStatus, page: 1 }),
+  setSearch: (search) => set({ search, page: 1 }),
+  setSelectedCategory: (selectedCategory) => set({ selectedCategory, page: 1 }),
+  setVendor: (vendor) => set({ vendor, page: 1 }),
+  setProductType: (productType) => set({ productType, page: 1 }),
+  setPage: (page) => set({ page }),
+  setOpenFilterDropdown: (openFilterDropdown) => set({ openFilterDropdown }),
+  setCollections: (collections) => set({ collections }),
+  // Product management
+  setProducts: (products) => set({ products }),
+  setLoading: (loading) => set({ loading }),
+
   fetchProducts: async (storeslug) => {
     const state = get();
     try {
@@ -203,6 +220,29 @@ export const useProductFilter = create<ProductFilter>()((set, get) => ({
       state.setLoading(false);
     }
   },
+  fetchCollections: async () => {
+    const state = get();
+    try {
+      state.setLoading(true);
+      const res = await fetch(`/api/dashboard/collections`);
+      const data = await res.json();
+      state.setCollections(data);
+    } catch (error) {
+      console.error("Failed to load collections:", error);
+      state.setCollections([]);
+    } finally {
+      state.setLoading(false);
+    }
+  },
+
+  // Row selection
+  setSelectRow: (selectRow) => {
+    if (typeof selectRow === "function") {
+      set((state) => ({ selectRow: selectRow(state.selectRow) }));
+    } else {
+      set({ selectRow });
+    }
+  },
 
   handleSelectAll: (checked) => {
     const { products } = get();
@@ -225,17 +265,28 @@ export const useProductFilter = create<ProductFilter>()((set, get) => ({
     });
   },
 
+  clearSelection: () => set({ selectRow: new Set() }),
+
+  // Column visibility
+  toggleColumnVisible: (columnId) => {
+    set((state) => ({
+      visibleColumns: {
+        ...state.visibleColumns,
+        [columnId]: !state.visibleColumns[columnId],
+      },
+    }));
+  },
+
+  // Bulk operations
   bulkDeleteProducts: async (storeslug) => {
-    const { selectRow, products, setProducts, setSelectRow } = get();
+    const { selectRow, products, setProducts, clearSelection } = get();
     const productIds = Array.from(selectRow);
 
-    // Import your deleteProducts action
-    const { deleteProducts } = await import("@/actions/deleteProduct");
     const deleted = await deleteProducts(productIds);
 
     if (deleted.success) {
       setProducts(products.filter((p) => !selectRow.has(p.id)));
-      setSelectRow(new Set());
+      clearSelection();
       toast.success(`Successfully deleted ${productIds.length} product(s)`);
     } else {
       toast.error("Failed to delete products");
@@ -243,12 +294,10 @@ export const useProductFilter = create<ProductFilter>()((set, get) => ({
   },
 
   handleProductStatusUpdate: async (status, storeslug) => {
-    const { selectRow, products, setProducts, setSelectRow, fetchProducts } =
+    const { selectRow, products, setProducts, clearSelection, fetchProducts } =
       get();
     const productIds = Array.from(selectRow);
 
-    const { updatedProductStatus } =
-      await import("@/actions/updateProductStatus");
     const update = await updatedProductStatus(status, productIds);
 
     if (update.success) {
@@ -260,17 +309,16 @@ export const useProductFilter = create<ProductFilter>()((set, get) => ({
           productIds.includes(p.id) ? { ...p, status } : p,
         ),
       );
-      setSelectRow(new Set());
+      clearSelection();
     } else {
       toast.error("Failed to update products");
     }
   },
 
   handleSalesChannelsStatusUpdate: async (status, storeslug) => {
-    const { selectRow, fetchProducts, setSelectRow } = get();
+    const { selectRow, fetchProducts, clearSelection } = get();
     const productIds = Array.from(selectRow);
 
-    const { updateSalesChannelStatus } = await import("@/actions/salesChanel");
     const update = await updateSalesChannelStatus(
       storeslug,
       productIds,
@@ -282,24 +330,22 @@ export const useProductFilter = create<ProductFilter>()((set, get) => ({
         `Successfully ${status ? "published" : "unpublished"} ${update.updatedCount} product(s)`,
       );
       await fetchProducts(storeslug);
-      setSelectRow(new Set());
+      clearSelection();
     } else {
       toast.error("Failed to update sales channel status");
     }
   },
 
+  // Catalog operations
   fetchCatalogs: async () => {
-    const { getAllCatalogs } = await import("@/actions/getCatlaogs");
     const catalogsList = await getAllCatalogs();
     set({ catalogs: catalogsList });
   },
 
   handleAssignProductToCatalog: async (catalogId, storeslug) => {
-    const { selectRow, fetchProducts, setSelectRow } = get();
+    const { selectRow, fetchProducts, clearSelection } = get();
     const productIds = Array.from(selectRow);
 
-    const { addProductToCatalog } =
-      await import("@/actions/addProductToCatalog");
     const update = await addProductToCatalog(productIds, catalogId);
 
     if (update.success) {
@@ -307,17 +353,16 @@ export const useProductFilter = create<ProductFilter>()((set, get) => ({
         `Successfully included ${productIds.length} product(s) to catalog`,
       );
       await fetchProducts(storeslug);
-      setSelectRow(new Set());
+      clearSelection();
     } else {
       toast.error(update.message || "Failed to update products");
     }
   },
 
   handleExcludeProductFromCatalog: async (catalogId, storeslug) => {
-    const { selectRow, fetchProducts, setSelectRow } = get();
+    const { selectRow, fetchProducts, clearSelection } = get();
     const productIds = Array.from(selectRow);
 
-    const { excludeFromCatalog } = await import("@/actions/deleteFromCatalog");
     const update = await excludeFromCatalog(productIds, catalogId);
 
     if (update.success) {
@@ -325,12 +370,44 @@ export const useProductFilter = create<ProductFilter>()((set, get) => ({
         `Successfully excluded ${productIds.length} product(s) from catalog`,
       );
       await fetchProducts(storeslug);
-      setSelectRow(new Set());
+      clearSelection();
     } else {
       toast.error(update.message || "Failed to exclude products");
     }
   },
+  handleAssignProductToCollection: async (collectionId, storeslug) => {
+    const { selectRow, fetchProducts, clearSelection } = get();
+    const productIds = Array.from(selectRow);
 
+    const update = await addProductsToCollection(productIds, collectionId);
+
+    if (update.success) {
+      toast.success(
+        `Successfully added ${productIds.length} product(s) to collection`,
+      );
+      await fetchProducts(storeslug);
+      clearSelection();
+    } else {
+      toast.error(update.message || "Failed to update products");
+    }
+  },
+  handleRemoveProductFromCollections: async (catalogId, storeslug) => {
+    const { selectRow, fetchProducts, clearSelection } = get();
+    const productIds = Array.from(selectRow);
+
+    const update = await removeFromCollection(productIds, catalogId);
+
+    if (update.success) {
+      toast.success(
+        `Successfully deleted ${productIds.length} product(s) from collection`,
+      );
+      await fetchProducts(storeslug);
+      clearSelection();
+    } else {
+      toast.error(update.message || "Failed to update products");
+    }
+  },
+  // Reset functions
   resetFilters: () => {
     set({
       selectedStatus: "all",
@@ -339,8 +416,22 @@ export const useProductFilter = create<ProductFilter>()((set, get) => ({
       vendor: [],
       productType: [],
       page: 1,
-      openFilterDropdown: false,
+    });
+  },
+
+  resetAll: () => {
+    set({
+      products: [],
+      loading: true,
       selectRow: new Set(),
+      selectedStatus: "all",
+      search: "",
+      selectedCategory: [],
+      vendor: [],
+      productType: [],
+      page: 1,
+      openFilterDropdown: false,
+      catalogs: [],
     });
   },
 }));

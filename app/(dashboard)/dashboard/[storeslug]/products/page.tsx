@@ -15,120 +15,82 @@ import {
   Table,
   TableBody,
   TableCaption,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Columns, Eye, EyeOff, Filter, Table2, Tag, X } from "lucide-react";
+import { Columns, Eye, EyeOff, Filter, Tag, X } from "lucide-react";
 import Link from "next/link";
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect } from "react";
 import ProductTableRow from "@/app/(dashboard)/_components/ProductTableRow";
-import { useProductFilter } from "@/stores/products-filter";
 import { useParams } from "next/navigation";
 import {
-  Combobox,
-  ComboboxChip,
-  ComboboxChips,
-  ComboboxChipsInput,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxItem,
-  ComboboxList,
-  ComboboxValue,
-  useComboboxAnchor,
-} from "@/components/ui/combobox";
-import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { COLUMNS } from "@/app/constants/services";
+import ProductFilters from "@/app/(dashboard)/_components/ProductFilters";
+import ProductDropDown from "@/app/(dashboard)/_components/ProductDropDown";
+import { useProductsStore } from "@/stores/product-functions";
 
 const ProductsPage = () => {
-  const { storeslug } = useParams();
+  const params = useParams();
+  const storeslug = String(params.storeslug);
+
+  // Get all state and actions from the products store
   const {
+    // State
     products,
-    setProducts,
+    loading,
     selectedStatus,
-    setSelectedStatus,
-    vendor,
-    setVendor,
     search,
-    setSearch,
-    productType,
-    setProductType,
-    page,
-    setPage,
     selectedCategory,
+    vendor,
+    productType,
+    page,
+    openFilterDropdown,
+    selectRow,
+    visibleColumns,
+    catalogs,
+    collections,
+
+    // Computed
+    getStatuses,
+    getVendors,
+    getProductTypes,
+    getCategories,
+    getSelectAll,
+
+    // Actions
+    setSelectedStatus,
+    setSearch,
     setSelectedCategory,
-  } = useProductFilter();
-  const [selectRow, setSelectRow] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
-  const [openFilterDropdown, setOpenFilterDropdown] = useState(false);
-  const [visibleColumns, setVisibleColumns] = useState({
-    product: true,
-    status: true,
-    inventory: true,
-    category: true,
-    channels: true,
-    productType: true,
-    vendor: true,
-    created: true,
-    updated: true,
-  });
+    setVendor,
+    setProductType,
+    setPage,
+    setOpenFilterDropdown,
 
-  const toggleColumnVisible = (columnId: string) => {
-    setVisibleColumns((prev) => ({
-      ...prev,
-      [columnId]: !prev[columnId as keyof typeof prev],
-    }));
-  };
+    fetchProducts,
+    handleSelectAll,
+    handleSelectRows,
+    bulkDeleteProducts,
+    handleProductStatusUpdate,
+    handleSalesChannelsStatusUpdate,
+    fetchCatalogs,
+    handleAssignProductToCatalog,
+    handleExcludeProductFromCatalog,
+    toggleColumnVisible,
+    fetchCollections,
+    handleAssignProductToCollection,
+    handleRemoveProductFromCollections,
+  } = useProductsStore();
 
+  // Fetch products when dependencies change
   useEffect(() => {
     if (!storeslug) return;
-
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const vendorParam = Array.isArray(vendor) ? vendor.join(",") : vendor;
-        const productTypeParam = Array.isArray(productType)
-          ? productType.join(",")
-          : productType;
-        const categoryParam = Array.isArray(selectedCategory)
-          ? selectedCategory.join(",")
-          : selectedCategory;
-
-        const queryParams = new URLSearchParams({
-          status: selectedStatus,
-          vendor: vendorParam || "",
-          productType: productTypeParam || "",
-          category: categoryParam || "",
-          search: search || "",
-          page: page.toString(),
-        });
-
-        const res = await fetch(
-          `/api/dashboard/${storeslug}/products?${queryParams.toString()}`,
-        );
-
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-
-        const data = await res.json();
-        setProducts(data.products || []);
-      } catch (error) {
-        console.error("Failed to load products:", error);
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
+    fetchProducts(storeslug);
   }, [
     storeslug,
     selectedStatus,
@@ -137,75 +99,46 @@ const ProductsPage = () => {
     selectedCategory,
     search,
     page,
-    setProducts,
+    fetchProducts,
   ]);
+  useEffect(() => {
+    fetchCollections();
+  }, [storeslug, page]);
 
-  const statuses = useMemo(
-    () => ["all", ...new Set(products.map((p: any) => p.status))],
-    [products],
-  );
+  // Fetch catalogs on mount
+  useEffect(() => {
+    fetchCatalogs();
+  }, [fetchCatalogs]);
 
-  const vendors = useMemo(
-    () => [...new Set(products.map((p: any) => p.vendor).filter(Boolean))],
-    [products],
-  );
+  const selectAll = getSelectAll();
+  const statuses = getStatuses();
+  const vendors = getVendors();
+  const productTypes = getProductTypes();
+  const categories = getCategories();
 
-  const productTypes = useMemo(
-    () => [...new Set(products.map((p: any) => p.productType).filter(Boolean))],
-    [products],
-  );
-
-  const categories = useMemo(
-    () => [
-      ...new Set(products.map((p: any) => p.category?.name).filter(Boolean)),
-    ],
-    [products],
-  );
-
-  const selectAll = useMemo(
-    () => selectRow.size === products.length && products.length > 0,
-    [selectRow.size, products.length],
-  );
-
-  const handleSelectAll = useCallback(
-    (checked: boolean) => {
-      if (checked === true) {
-        setSelectRow(new Set(products.map((p: any) => p.id)));
-      } else {
-        setSelectRow(new Set());
-      }
-    },
-    [products],
-  );
-
-  const handleSelectRows = useCallback(
-    (id: string, checked: boolean | "indeterminate") => {
-      setSelectRow((prev) => {
-        const newSelected = new Set(prev);
-        if (checked === true) {
-          newSelected.add(id);
-        } else {
-          newSelected.delete(id);
-        }
-        return newSelected;
-      });
-    },
-    [],
-  );
-
-  const anchor = useComboboxAnchor();
-
+  const hasActiveFilters =
+    vendor.length > 0 || productType.length > 0 || selectedCategory.length > 0;
+  if (products.length === 0) {
+    return (
+      <div className="flex items-center justify-center ">
+        <div className="text-5xl">🛍️</div>
+        <h3 className="text-3xl">Your product list is empty</h3>
+        <p className=" text-2xl">Get started by adding your first product</p>
+        <Link
+          className={"bg-black text-white px-5 py-1 rounded-sm"}
+          href={`/dashboard/${storeslug}/products`}
+        >
+          + Add Product
+        </Link>
+      </div>
+    );
+  }
   return (
     <div>
       <div className="flex items-center justify-between">
         <p className="flex items-center gap-2 py-4">
           <Tag size={18} />
           <span className="text-xl font-semibold">Products</span>
-          {selectRow.size > 0 && (
-            <span className="ml-2 text-sm text-gray-500">
-              ({selectRow.size} selected)
-            </span>
-          )}
         </p>
         <div className="flex gap-2">
           <DropdownMenu>
@@ -219,7 +152,11 @@ const ProductsPage = () => {
               {COLUMNS.map((column) => (
                 <DropdownMenuItem key={column.id} className="p-0">
                   <button
-                    onClick={() => toggleColumnVisible(column.id)}
+                    onClick={() =>
+                      toggleColumnVisible(
+                        column.id as keyof typeof visibleColumns,
+                      )
+                    }
                     className="flex items-center justify-between w-full px-2 py-1.5 hover:bg-accent rounded-sm"
                   >
                     <span>{column.label}</span>
@@ -275,10 +212,7 @@ const ProductsPage = () => {
             <button
               onClick={() => setOpenFilterDropdown(!openFilterDropdown)}
               className={`p-2 rounded-lg transition-colors ${
-                openFilterDropdown ||
-                (vendor && vendor.length > 0) ||
-                (productType && productType.length > 0) ||
-                (selectedCategory && selectedCategory.length > 0)
+                openFilterDropdown || hasActiveFilters
                   ? "bg-[#06102c] text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
@@ -288,115 +222,17 @@ const ProductsPage = () => {
           </div>
 
           {openFilterDropdown && (
-            <div className="mt-4 pt-4 border-t gap-5 flex flex-col md:flex-row items-center">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Filter by Vendor
-                </label>
-                <Combobox
-                  value={vendor}
-                  onValueChange={setVendor}
-                  multiple
-                  autoHighlight
-                  items={vendors}
-                >
-                  <ComboboxChips className="w-full">
-                    <ComboboxValue>
-                      {(values) => (
-                        <>
-                          {values.map((value: string) => (
-                            <ComboboxChip key={value}>{value}</ComboboxChip>
-                          ))}
-                          <ComboboxChipsInput placeholder="Select vendors..." />
-                        </>
-                      )}
-                    </ComboboxValue>
-                  </ComboboxChips>
-                  <ComboboxContent>
-                    <ComboboxEmpty>No vendors found.</ComboboxEmpty>
-                    <ComboboxList>
-                      {vendors.map((item) => (
-                        <ComboboxItem key={item} value={item}>
-                          {item}
-                        </ComboboxItem>
-                      ))}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Filter by Product Type
-                </label>
-                <Combobox
-                  value={productType}
-                  onValueChange={setProductType}
-                  multiple
-                  autoHighlight
-                  items={productTypes}
-                >
-                  <ComboboxChips className="w-full">
-                    <ComboboxValue>
-                      {(values) => (
-                        <>
-                          {values.map((value: string) => (
-                            <ComboboxChip key={value}>{value}</ComboboxChip>
-                          ))}
-                          <ComboboxChipsInput placeholder="Select product types..." />
-                        </>
-                      )}
-                    </ComboboxValue>
-                  </ComboboxChips>
-                  <ComboboxContent>
-                    <ComboboxEmpty>No product types found.</ComboboxEmpty>
-                    <ComboboxList>
-                      {productTypes.map((item) => (
-                        <ComboboxItem key={item} value={item}>
-                          {item}
-                        </ComboboxItem>
-                      ))}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Filter by Category
-                </label>
-                <Combobox
-                  value={selectedCategory}
-                  onValueChange={setSelectedCategory}
-                  multiple
-                  autoHighlight
-                  items={categories}
-                >
-                  <ComboboxChips className="w-full">
-                    <ComboboxValue>
-                      {(values) => (
-                        <>
-                          {values.map((value: string) => (
-                            <ComboboxChip key={value}>{value}</ComboboxChip>
-                          ))}
-                          <ComboboxChipsInput placeholder="Select categories..." />
-                        </>
-                      )}
-                    </ComboboxValue>
-                  </ComboboxChips>
-                  <ComboboxContent>
-                    <ComboboxEmpty>No categories found.</ComboboxEmpty>
-                    <ComboboxList>
-                      {categories.map((item) => (
-                        <ComboboxItem key={item} value={item}>
-                          {item}
-                        </ComboboxItem>
-                      ))}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-              </div>
-            </div>
+            <ProductFilters
+              vendor={vendor}
+              setVendor={setVendor}
+              vendors={vendors}
+              productType={productType}
+              setProductType={setProductType}
+              productTypes={productTypes}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              categories={categories}
+            />
           )}
         </div>
 
@@ -418,50 +254,84 @@ const ProductsPage = () => {
                     aria-label="Select all"
                   />
                 </TableHead>
-                {visibleColumns.product && (
-                  <TableHead className="text-xs font-semibold">
-                    Product
-                  </TableHead>
-                )}
-                {visibleColumns.status && (
-                  <TableHead className="text-xs font-semibold">
-                    Status
-                  </TableHead>
-                )}
-                {visibleColumns.inventory && (
-                  <TableHead className="text-xs font-semibold">
-                    Inventory
-                  </TableHead>
-                )}
-                {visibleColumns.category && (
-                  <TableHead className="text-xs font-semibold">
-                    Category
-                  </TableHead>
-                )}
-                {visibleColumns.channels && (
-                  <TableHead className="text-xs font-semibold">
-                    Channels
-                  </TableHead>
-                )}
-                {visibleColumns.productType && (
-                  <TableHead className="text-xs font-semibold">
-                    Product type
-                  </TableHead>
-                )}
-                {visibleColumns.vendor && (
-                  <TableHead className="text-xs font-semibold">
-                    Vendor
-                  </TableHead>
-                )}
-                {visibleColumns.created && (
-                  <TableHead className="text-right text-xs font-semibold">
-                    Created
-                  </TableHead>
-                )}
-                {visibleColumns.updated && (
-                  <TableHead className="text-right text-xs font-semibold">
-                    Updated
-                  </TableHead>
+                {selectRow.size > 0 ? (
+                  <ProductDropDown
+                    selectRow={selectRow}
+                    handleSalesChannelsStatusUpdate={(status) =>
+                      handleSalesChannelsStatusUpdate(status, storeslug)
+                    }
+                    handleProductStatusUpdate={(status) =>
+                      handleProductStatusUpdate(status, storeslug)
+                    }
+                    bulkDeleteProducts={() => bulkDeleteProducts(storeslug)}
+                    catalogs={catalogs}
+                    collections={collections}
+                    handleAssignProductToCatalog={(catalogId) =>
+                      handleAssignProductToCatalog(catalogId, storeslug)
+                    }
+                    handleExcludeProductFromCatalog={(catalogId) =>
+                      handleExcludeProductFromCatalog(catalogId, storeslug)
+                    }
+                    handleAssignProductToCollection={(colId) =>
+                      handleAssignProductToCollection(colId, storeslug)
+                    }
+                    handleRemoveFromCollection={(collId) =>
+                      handleRemoveProductFromCollections(collId, storeslug)
+                    }
+                  />
+                ) : (
+                  <>
+                    {visibleColumns.product && (
+                      <TableHead className="text-xs font-semibold">
+                        Product
+                      </TableHead>
+                    )}
+                    {visibleColumns.status && (
+                      <TableHead className="text-xs font-semibold">
+                        Status
+                      </TableHead>
+                    )}
+                    {visibleColumns.inventory && (
+                      <TableHead className="text-xs font-semibold">
+                        Inventory
+                      </TableHead>
+                    )}
+                    {visibleColumns.category && (
+                      <TableHead className="text-xs font-semibold">
+                        Category
+                      </TableHead>
+                    )}
+                    {visibleColumns.channels && (
+                      <TableHead className="text-xs font-semibold">
+                        Channels
+                      </TableHead>
+                    )}
+                    {visibleColumns.productType && (
+                      <TableHead className="text-xs font-semibold">
+                        Product type
+                      </TableHead>
+                    )}
+                    {visibleColumns.vendor && (
+                      <TableHead className="text-xs font-semibold">
+                        Vendor
+                      </TableHead>
+                    )}
+                    {visibleColumns.created && (
+                      <TableHead className="text-right text-xs font-semibold">
+                        Created
+                      </TableHead>
+                    )}
+                    {visibleColumns.updated && (
+                      <TableHead className="text-right text-xs font-semibold">
+                        Updated
+                      </TableHead>
+                    )}
+                    {visibleColumns.catalogs && (
+                      <TableHead className="text-xs font-semibold">
+                        Catalogs
+                      </TableHead>
+                    )}
+                  </>
                 )}
               </TableRow>
             </TableHeader>

@@ -134,4 +134,5 @@ export const COLUMNS = [
   { id: "vendor", label: "Vendor", defaultVisible: true },
   { id: "created", label: "Created", defaultVisible: true },
   { id: "updated", label: "Updated", defaultVisible: true },
+  { id: "catalogs", label: "Catalogs", defaultVisible: true },
 ];

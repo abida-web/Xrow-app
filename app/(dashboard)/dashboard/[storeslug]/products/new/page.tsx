@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tags, X } from "lucide-react";
 import { getAllCategories } from "@/actions/getCategories";
 import { Button } from "@/components/ui/button";
-import { useProductStore } from "@/stores/product-store";
+import { useProductStore } from "@/stores/product-create-store";
 import { toast } from "sonner";
 import { ImagesSection } from "@/app/(dashboard)/_components/ImageSection";
 import { VariantsSection } from "@/app/(dashboard)/_components/VarientSection";

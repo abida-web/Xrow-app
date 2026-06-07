@@ -1,4 +1,5 @@
 import {
+  boolean,
   integer,
   numeric,
   pgTable,
@@ -29,6 +30,7 @@ export const products = pgTable("products", {
   status: text("status").default("draft"),
   vendor: text("vendor"),
   productType: text("product_type"),
+  isPublished: boolean("is_published").default(true),
   createAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -45,7 +47,7 @@ export const productImages = pgTable("product_images", {
 export const productVariants = pgTable("product_variants", {
   id: uuid("id").defaultRandom().primaryKey(),
   productId: uuid("product_id")
-    .references(() => products.id)
+    .references(() => products.id, { onDelete: "cascade" })
     .notNull(),
   name: text("name").notNull(),
   sku: text("sku"),
@@ -61,7 +63,7 @@ export const productVariants = pgTable("product_variants", {
 export const productOptions = pgTable("productOptions", {
   id: uuid("id").defaultRandom().primaryKey(),
   productId: uuid("product_id")
-    .references(() => products.id)
+    .references(() => products.id, { onDelete: "cascade" })
     .notNull(),
   name: text("name").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -69,7 +71,7 @@ export const productOptions = pgTable("productOptions", {
 export const productOptionsValues = pgTable("product_option_value", {
   id: uuid("id").defaultRandom().primaryKey(),
   optionId: uuid("option_id")
-    .references(() => productOptions.id)
+    .references(() => productOptions.id, { onDelete: "cascade" })
     .notNull(),
   value: text("value").notNull(),
 });
@@ -91,6 +93,10 @@ export const collections = pgTable("collections", {
   id: uuid("id").defaultRandom().primaryKey(),
   storeId: uuid("store_id").references(() => store.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
+  description: text("description"),
+  type: text("type").default("manual"),
+  publishedScope: text("published_scope"),
+  image: text("image"),
   slug: text("slug").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -101,7 +107,7 @@ export const collectionProducts = pgTable(
       .references(() => collections.id, { onDelete: "cascade" })
       .notNull(),
     productId: uuid("product_id")
-      .references(() => products.id)
+      .references(() => products.id, { onDelete: "cascade" })
       .notNull(),
   },
   (table) => ({
@@ -126,3 +132,65 @@ export const inventoryTransactions = pgTable("inventory_transactions", {
   reason: text("reason"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+export const salesChannels = pgTable("sales_channels", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id")
+    .references(() => store.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text("name").notNull(), // 'Online Store', 'Point of Sale', 'Facebook Shop', 'Instagram', 'Google Shopping', 'TikTok Shop', etc.
+  handle: text("handle").unique().notNull(), // 'online-store', 'pos', 'facebook', 'instagram', 'google', 'tiktok'
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const productSalesChannels = pgTable(
+  "product_sales_channels",
+  {
+    productId: uuid("product_id")
+      .references(() => products.id, { onDelete: "cascade" })
+      .notNull(),
+    channelId: uuid("channel_id")
+      .references(() => salesChannels.id, { onDelete: "cascade" })
+      .notNull(),
+    isPublished: boolean("is_published").default(true),
+    publishedAt: timestamp("published_at").defaultNow(),
+    unpublishedAt: timestamp("unpublished_at"),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.productId, table.channelId] }),
+  }),
+);
+
+export const catalogs = pgTable("catalogs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id")
+    .references(() => store.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text("name").notNull(), // 'Main Catalog', 'B2B Wholesale', 'Winter Collection', etc.
+  description: text("description"),
+  handle: text("handle").unique().notNull(), // main-catalog, b2b-wholesale, winter-collection
+  isActive: boolean("is_active").default(true),
+  type: text("type").default("default"), // 'default', 'b2b', 'seasonal'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const catalogProducts = pgTable(
+  "catalog_products",
+  {
+    catalogId: uuid("catalog_id")
+      .references(() => catalogs.id, { onDelete: "cascade" })
+      .notNull(),
+    productId: uuid("product_id")
+      .references(() => products.id, { onDelete: "cascade" })
+      .notNull(),
+    isAtCatalog: boolean("is_at_catalog").default(true),
+    customPrice: numeric("custom_price"), // Optional: override price for this catalog
+    sortOrder: integer("sort_order").default(0),
+    addedAt: timestamp("added_at").defaultNow(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.catalogId, table.productId] }),
+  }),
+);

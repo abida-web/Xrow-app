@@ -1,5 +1,6 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { TableCell, TableRow } from "@/components/ui/table";
+
 import { Product } from "@/types";
 import { ParamValue } from "next/dist/server/request/params";
 import React from "react";
@@ -19,6 +20,7 @@ interface RowProps {
     vendor: boolean;
     created: boolean;
     updated: boolean;
+    catalogs: boolean; // ✅ Add this
   };
 }
 
@@ -30,6 +32,9 @@ const ProductTableRow = ({
   visibleColumns,
 }: RowProps) => {
   const isSelected = selectRow.has(product.id);
+
+  // ✅ Get catalogs from product (API already transforms catalogProducts to catalogs)
+  const catalogs = product.catalogs || [];
 
   const getStatusBadge = () => {
     const statusConfig: Record<string, { class: string; label: string }> = {
@@ -52,15 +57,15 @@ const ProductTableRow = ({
       </span>
     );
   };
-
   const getInventoryText = () => {
-    const quantity = product.variants?.[0]?.inventoryQuantity;
-    if (quantity === undefined) return "N/A";
+    const firstVariant = product.variants?.[0];
+    const quantity = firstVariant?.inventoryQuantity;
+
+    if (quantity === undefined || quantity === null) return "N/A";
     if (quantity === 0) return "Out of stock";
     if (quantity < 10) return `${quantity} in stock (low)`;
     return `${quantity} in stock`;
   };
-
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
     try {
@@ -123,14 +128,6 @@ const ProductTableRow = ({
         <TableCell>{product.category?.name || "Uncategorized"}</TableCell>
       )}
 
-      {visibleColumns.channels && (
-        <TableCell>
-          <span className="inline-flex px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs">
-            {storeslug}
-          </span>
-        </TableCell>
-      )}
-
       {visibleColumns.productType && (
         <TableCell>{product.productType || "—"}</TableCell>
       )}
@@ -146,6 +143,26 @@ const ProductTableRow = ({
       {visibleColumns.updated && (
         <TableCell className="text-right whitespace-nowrap text-muted-foreground">
           {formatDate(product.updatedAt)}
+        </TableCell>
+      )}
+
+      {/* ✅ Add Catalogs Column */}
+      {visibleColumns.catalogs && (
+        <TableCell>
+          <div className="flex flex-wrap gap-1 max-w-[200px]">
+            {catalogs.length > 0 ? (
+              catalogs.map((catalog: any) => (
+                <span
+                  key={catalog.id}
+                  className="text-xs bg-blue-100 text-blue-800 hover:bg-blue-100"
+                >
+                  {catalog.name}
+                </span>
+              ))
+            ) : (
+              <span className="text-xs text-muted-foreground">—</span>
+            )}
+          </div>
         </TableCell>
       )}
     </TableRow>

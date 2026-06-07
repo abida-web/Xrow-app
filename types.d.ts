@@ -41,7 +41,8 @@ export interface SessionData {
     session?: unknown;
   };
 }
-interface Product {
+
+export interface Product {
   id: string;
   name: string;
   status: string;
@@ -52,4 +53,30 @@ interface Product {
   vendor?: string;
   createAt?: string;
   updatedAt?: string;
+  catalogs?: Array<{ id: string; name: string; handle: string; type: string }>; // ✅ Add this
+}
+
+export type CatalogProps = {
+  id: string;
+  storeId: string;
+  name: string;
+  description: string | null;
+  handle: string;
+  isActive: boolean | null;
+  type: string | null;
+  catalogProducts?: any[]; // ✅ Fix: make optional and use any[] or proper type
+  createdAt: Date | null;
+  updatedAt: Date | null;
+};
+export interface Collection {
+  id: string;
+  storeId: string;
+  name: string;
+  description: string | null;
+  type: string | null; // "manual" or other types
+  publishedScope: string | null;
+  image: string | null;
+  slug: string;
+  createdAt: Date | null;
+  collectionProducts: any[];
 }
