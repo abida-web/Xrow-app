@@ -124,7 +124,7 @@ const ProductsPage = () => {
   const prevPage = () => {
     setPage(page - 1);
   };
-  if (products.length === 0) {
+  if (products.length < 0) {
     return (
       <div className="flex flex-col gap-2 items-center justify-center ">
         <div className="text-5xl mt-20">🛍️</div>
