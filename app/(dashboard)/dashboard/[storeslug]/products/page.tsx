@@ -103,7 +103,7 @@ const ProductsPage = () => {
   ]);
   useEffect(() => {
     fetchCollections();
-  }, [storeslug, page]);
+  }, [storeslug]);
 
   // Fetch catalogs on mount
   useEffect(() => {
@@ -118,10 +118,16 @@ const ProductsPage = () => {
 
   const hasActiveFilters =
     vendor.length > 0 || productType.length > 0 || selectedCategory.length > 0;
+  const nextPage = () => {
+    setPage(page + 1);
+  };
+  const prevPage = () => {
+    setPage(page - 1);
+  };
   if (products.length === 0) {
     return (
-      <div className="flex items-center justify-center ">
-        <div className="text-5xl">🛍️</div>
+      <div className="flex flex-col gap-2 items-center justify-center ">
+        <div className="text-5xl mt-20">🛍️</div>
         <h3 className="text-3xl">Your product list is empty</h3>
         <p className=" text-2xl">Get started by adding your first product</p>
         <Link
@@ -239,11 +245,22 @@ const ProductsPage = () => {
         <div className="overflow-x-auto">
           <Table>
             <TableCaption className="text-xs text-gray-500">
-              {loading
-                ? "Loading products..."
-                : products.length === 0
-                  ? "No products found"
-                  : `Showing ${products.length} products`}
+              // Add pagination UI
+              {products.length > 0 && (
+                <div className="flex justify-between items-center p-4 border-t max-w-xl">
+                  <Button
+                    onClick={prevPage}
+                    disabled={page === 1}
+                    variant="outline"
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-gray-600">Page {page}</span>
+                  <Button onClick={nextPage} variant="outline">
+                    Next
+                  </Button>
+                </div>
+              )}
             </TableCaption>
             <TableHeader>
               <TableRow className="bg-gray-50">

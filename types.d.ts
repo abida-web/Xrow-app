@@ -47,7 +47,7 @@ export interface Product {
   name: string;
   status: string;
   images?: Array<{ url: string }>;
-  variants?: Array<{ inventoryQuantity?: number; price?: number }>;
+  variants?: Array<{ inventoryQuantity: string; price?: number }>;
   category?: { name: string };
   productType?: string;
   vendor?: string;

@@ -83,9 +83,8 @@ export async function GET(
       images: product.images,
       variants:
         product.variants?.map((variant) => ({
-          inventoryQuantity: variant.inventoryQuantity
-            ? parseFloat(variant.inventoryQuantity)
-            : undefined,
+          inventoryQuantity: variant.inventoryQuantity,
+
           price: variant.price ?? undefined,
         })) || [],
       category: product.category ? { name: product.category.name } : undefined,
