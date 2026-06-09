@@ -7,7 +7,7 @@ import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Sidebar from "../../_components/Sidebar";
-import Topbar from "../../_components/Topbar";
+import UnifiedTopbar from "../../_components/Topbar";
 
 const StoreLayout = async ({
   children,
@@ -40,16 +40,11 @@ const StoreLayout = async ({
   return (
     <div className="flex h-screen flex-col bg-gray-100">
       {/* Top Bar - Full Width */}
-      <Topbar />
+      <UnifiedTopbar storeSlug={storeslug} />
 
       {/* Sidebar and Main Content */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Mobile sidebar - overlay mode */}
-
-        {/* Desktop sidebar - always visible */}
-        <div className="hidden md:block">
-          <Sidebar storeSlug={storeslug} />
-        </div>
 
         {/* Main content - always takes remaining space */}
         <main className="flex-1 overflow-auto">

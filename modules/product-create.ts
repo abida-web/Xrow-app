@@ -33,74 +33,88 @@ export async function createProductWithAllData(
 
   if (productData.options) {
     for (const option of productData.options) {
-    const [createdOption] = await productRepository.createOptions(db, [
-      {
-        productId: product.id,
-        name: option.name,
-      },
-    ]);
+      const [createdOption] = await productRepository.createOptions(db, [
+        {
+          productId: product.id,
+          name: option.name,
+        },
+      ]);
 
-    const optionValues = await productRepository.createOptionValues(
-      db,
-      option.values.map((value) => ({
-        optionId: createdOption.id,
-        value: value,
-      })),
-    );
-
-    // Store mapping
-    option.values.forEach((value, idx) => {
-      optionValueMap.set(
-        `${createdOption.name}:${value}`,
-        optionValues[idx].id,
+      const optionValues = await productRepository.createOptionValues(
+        db,
+        option.values.map((value) => ({
+          optionId: createdOption.id,
+          value: value,
+        })),
       );
-    });
-  }
+
+      // Store mapping
+      option.values.forEach((value, idx) => {
+        optionValueMap.set(
+          `${createdOption.name}:${value}`,
+          optionValues[idx].id,
+        );
+      });
+    }
   }
 
   // 4. Create variants and link option values
   if (productData.variants) {
     for (const variant of productData.variants) {
-    let imageId = null;
-    if (variant.imageIndex !== undefined && images[variant.imageIndex]) {
-      imageId = images[variant.imageIndex].id;
-    }
+      let imageId = null;
+      if (variant.imageIndex !== undefined && images[variant.imageIndex]) {
+        imageId = images[variant.imageIndex].id;
+      }
 
-    const [createdVariant] = await productRepository.createVarients(db, [
-      {
-        productId: product.id,
-        name: variant.name,
-        sku: variant.sku,
-        barcode: variant.barcode,
-        price: variant.price.toString(),
-        inventoryQuantity: variant.inventoryQuantity,
-        weight: variant.weight,
-        weightUnit: variant.weightUnit,
-        imageId: imageId,
-      },
-    ]);
+      const [createdVariant] = await productRepository.createVarients(db, [
+        {
+          productId: product.id,
+          name: variant.name,
+          sku: variant.sku,
+          barcode: variant.barcode,
+          price: variant.price.toString(),
+          inventoryQuantity: variant.inventoryQuantity,
+          weight: variant.weight,
+          weightUnit: variant.weightUnit,
+          imageId: imageId,
+        },
+      ]);
+      if (
+        variant.inventoryTransactions &&
+        variant.inventoryTransactions.length > 0
+      ) {
+        await productRepository.createInventory(db, [
+          variant.inventoryTransactions.map((transaction) => ({
+            variantId: transaction.variantId,
+            createdAt: transaction.createdAt,
+            storeId: storeId,
+          })),
+        ]);
+      }
 
-    // Link variant to option values
-    const variantLinks = [];
-    if (productData.options) {
-      for (let i = 0; i < productData.options.length; i++) {
-        const option = productData.options[i];
-        const optionValue = variant.optionValues[i];
-        const optionValueId = optionValueMap.get(`${option.name}:${optionValue}`);
+      // Link variant to option values
+      const variantLinks = [];
+      if (productData.options) {
+        for (let i = 0; i < productData.options.length; i++) {
+          const option = productData.options[i];
+          const optionValue = variant.optionValues[i];
+          const optionValueId = optionValueMap.get(
+            `${option.name}:${optionValue}`,
+          );
 
-        if (optionValueId) {
-          variantLinks.push({
-            variantId: createdVariant.id,
-            optionValueId: optionValueId,
-          });
+          if (optionValueId) {
+            variantLinks.push({
+              variantId: createdVariant.id,
+              optionValueId: optionValueId,
+            });
+          }
         }
       }
-    }
 
-    if (variantLinks.length > 0) {
-      await productRepository.createVarientLinks(db, variantLinks);
+      if (variantLinks.length > 0) {
+        await productRepository.createVarientLinks(db, variantLinks);
+      }
     }
-  }
   }
 
   // 5. Create tags

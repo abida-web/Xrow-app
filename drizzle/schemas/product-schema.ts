@@ -128,7 +128,11 @@ export const inventoryTransactions = pgTable("inventory_transactions", {
   variantId: uuid("variant_id").references(() => productVariants.id, {
     onDelete: "cascade",
   }),
-  quantityChange: integer("quantity_change").notNull(),
+  quantityChange: integer("quantity_change"),
+
+  storeId: uuid("store_id").references(() => store.id, {
+    onDelete: "cascade",
+  }),
   reason: text("reason"),
   createdAt: timestamp("created_at").defaultNow(),
 });
