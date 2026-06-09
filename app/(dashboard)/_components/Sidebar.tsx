@@ -2,7 +2,7 @@
 import { sidebarItems } from "@/lib/data";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 const Sidebar = ({ storeSlug }: { storeSlug: string }) => {
@@ -11,7 +11,9 @@ const Sidebar = ({ storeSlug }: { storeSlug: string }) => {
   );
   const pathname = usePathname();
 
-  const toggleSubMenu = (itemId: string) => {
+  const toggleSubMenu = (itemId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setExpandedMenus((prev) => ({
       ...prev,
       [itemId]: !prev[itemId],
@@ -20,16 +22,23 @@ const Sidebar = ({ storeSlug }: { storeSlug: string }) => {
 
   // Check if any submenu item is active
   const isSubMenuActive = (item: any) => {
-    if (!item.subMenus || item.subMenus.length === 0) return false;
-
+    if (!item.subMenus?.length) return false;
     return item.subMenus.some((subItem: any) => {
-      const subHref = `/dashboard/${storeSlug}/products/${subItem.id}`;
+      const subHref = `/dashboard/${storeSlug}/${subItem.id}`;
       return pathname === subHref;
     });
   };
 
+  // Get the parent href
+  const getParentHref = (item: any) => {
+    if (item.id === "dashboard") {
+      return `/dashboard/${storeSlug}`;
+    }
+    return `/dashboard/${storeSlug}/${item.id}`;
+  };
+
   // Auto-expand if a submenu item is active
-  React.useEffect(() => {
+  useEffect(() => {
     sidebarItems.forEach((item) => {
       if (isSubMenuActive(item) && !expandedMenus[item.id]) {
         setExpandedMenus((prev) => ({ ...prev, [item.id]: true }));
@@ -42,49 +51,27 @@ const Sidebar = ({ storeSlug }: { storeSlug: string }) => {
       <nav className="p-4">
         <ul className="space-y-1">
           {sidebarItems.map((item) => {
-            // Special handling for dashboard - point to base slug page
-            const href =
-              item.id === "dashboard"
-                ? `/dashboard/${storeSlug}`
-                : `/dashboard/${storeSlug}/${item.id}`;
-
-            // Check if current route matches
-            const isActive =
-              item.id === "dashboard"
-                ? pathname === `/dashboard/${storeSlug}`
-                : pathname === `/dashboard/${storeSlug}/${item.id}`;
+            const hasSubMenus = item.subMenus?.length > 0;
+            const isExpanded = expandedMenus[item.id];
+            const parentHref = getParentHref(item);
+            const isParentActive =
+              pathname === parentHref || isSubMenuActive(item);
 
             const Icon = item.icon;
-            const hasSubMenus = item.subMenus && item.subMenus.length > 0;
-            const isExpanded = expandedMenus[item.id];
-            const isParentActive = isActive || isSubMenuActive(item);
 
             return (
               <li key={item.id} className="mb-1">
                 {/* Parent Menu Item */}
                 <div
-                  onClick={() => {
-                    if (hasSubMenus) {
-                      toggleSubMenu(item.id);
-                    }
-                  }}
-                  className={`flex items-center justify-between px-4 py-2 rounded-lg transition-colors cursor-pointer ${
-                    isParentActive && !hasSubMenus
+                  className={`flex items-center justify-between px-4 py-2 rounded-lg transition-colors ${
+                    isParentActive
                       ? "bg-[#06102c] text-white"
-                      : isParentActive && hasSubMenus
-                        ? "bg-[#06102c] text-white"
-                        : "text-gray-700 hover:bg-gray-100"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
                   <Link
-                    href={href}
+                    href={parentHref}
                     className="flex items-center gap-3 flex-1"
-                    onClick={(e) => {
-                      if (hasSubMenus) {
-                        e.preventDefault();
-                        toggleSubMenu(item.id);
-                      }
-                    }}
                   >
                     <Icon className="w-4 h-4" />
                     <span className="text-sm">{item.label}</span>
@@ -92,8 +79,8 @@ const Sidebar = ({ storeSlug }: { storeSlug: string }) => {
 
                   {hasSubMenus && (
                     <button
-                      onClick={() => toggleSubMenu(item.id)}
-                      className="p-1"
+                      onClick={(e) => toggleSubMenu(item.id, e)}
+                      className="p-1 focus:outline-none"
                     >
                       {isExpanded ? (
                         <ChevronDown className="w-4 h-4" />

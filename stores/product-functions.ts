@@ -391,11 +391,11 @@ export const useProductsStore = create<ProductsStore>()((set, get) => ({
       toast.error(update.message || "Failed to update products");
     }
   },
-  handleRemoveProductFromCollections: async (catalogId, storeslug) => {
+  handleRemoveProductFromCollections: async (collectionId, storeslug) => {
     const { selectRow, fetchProducts, clearSelection } = get();
     const productIds = Array.from(selectRow);
 
-    const update = await removeFromCollection(productIds, catalogId);
+    const update = await removeFromCollection(productIds, collectionId);
 
     if (update.success) {
       toast.success(

@@ -1,5 +1,6 @@
 import {
   categories,
+  inventoryTransactions,
   productImages,
   productOptions,
   productOptionsValues,
@@ -35,5 +36,8 @@ export const productRepository = {
   },
   async createTags(db: any, data: any[]) {
     return db.insert(productTags).values(data).returning();
+  },
+  async createInventory(db: any, data: any[]) {
+    return db.insert(inventoryTransactions).values(data).returning();
   },
 };

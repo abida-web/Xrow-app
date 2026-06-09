@@ -143,7 +143,7 @@ const NewPage = () => {
     <div className="overflow-hidden">
       <h1 className="flex gap-2 items-center font-semibold">
         <Tags size={20} />
-        <span>Collections</span>
+        <span>Add Product</span>
       </h1>
 
       <form

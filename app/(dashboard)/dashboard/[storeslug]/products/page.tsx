@@ -245,7 +245,6 @@ const ProductsPage = () => {
         <div className="overflow-x-auto">
           <Table>
             <TableCaption className="text-xs text-gray-500">
-              // Add pagination UI
               {products.length > 0 && (
                 <div className="flex justify-between items-center p-4 border-t max-w-xl">
                   <Button
