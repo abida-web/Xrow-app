@@ -1,5 +1,5 @@
 // modules/collections-repository.ts
-import { collections } from "@/drizzle/schema";
+import { collectionProducts, collections } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 
 export const collectionRepository = {
@@ -14,5 +14,11 @@ export const collectionRepository = {
         },
       },
     });
+  },
+  async createCollection(db: any, data: any) {
+    return db.insert(collections).values(data);
+  },
+  async addProToCollection(db: any, data: any) {
+    return db.insert(collectionProducts).values(data);
   },
 };

@@ -1,10 +1,11 @@
 import { db } from "@/drizzle/db";
-import { store } from "@/drizzle/schema";
+import { collectionProducts, collections, store } from "@/drizzle/schema";
 import { auth } from "@/lib/auth";
 import { collectionRepository } from "../../../../modules/collections-repository";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { generateSlug } from "@/modules/utils";
 
 export async function GET() {
   try {
@@ -43,4 +44,30 @@ export async function POST(request: Request) {
   const storeData = await db.query.store.findFirst({
     where: eq(store.ownerId, session.user.id),
   });
+  if (!storeData) {
+    return NextResponse.json({ error: "Store doesnt exsist" }, { status: 404 });
+  }
+  const body = await request.json();
+  const { name, description, type, publishedScope, image, productIds } = body;
+  const [newCollection] = await db
+    .insert(collections)
+    .values({
+      storeId: storeData.id,
+      name: name, // Make sure name is explicitly set
+      description: description || null,
+      slug: generateSlug(name),
+      type: type || "manual",
+      publishedScope: publishedScope || "online",
+      image: image || null,
+    })
+    .returning();
+  if (productIds && productIds.length > 0) {
+    await db.insert(collectionProducts).values(
+      productIds.map((productId: string) => ({
+        collectionId: newCollection.id,
+        productId: productId,
+      })),
+    );
+  }
+  return NextResponse.json({ success: true }, { status: 201 });
 }

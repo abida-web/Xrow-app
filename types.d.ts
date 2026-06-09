@@ -77,6 +77,6 @@ export interface Collection {
   publishedScope: string | null;
   image: string | null;
   slug: string;
-  createdAt: Date | null;
+  createdAt: Date;
   collectionProducts: any[];
 }
