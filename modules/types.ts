@@ -12,24 +12,39 @@ export const CreateProductSchema = z.object({
       url: z.string().url(),
     }),
   ),
-  options: z.array(
-    z.object({
-      name: z.string(),
-      values: z.array(z.string()),
-    }),
-  ).optional(),
-  variants: z.array(
-    z.object({
-      name: z.string(),
-      sku: z.string().optional(),
-      barcode: z.string().optional(),
-      price: z.number(),
-      inventoryQuantity: z.number().optional(),
-      weight: z.string().optional().nullable(),
-      weightUnit: z.string().optional(),
-      imageIndex: z.number().optional(),
-      optionValues: z.array(z.string()),
-    }),
-  ).optional(),
+  options: z
+    .array(
+      z.object({
+        name: z.string(),
+        values: z.array(z.string()),
+      }),
+    )
+    .optional(),
+  variants: z
+    .array(
+      z.object({
+        name: z.string(),
+        sku: z.string().optional(),
+        barcode: z.string().optional(),
+        price: z.number(),
+        inventoryQuantity: z.number().optional(),
+        weight: z.string().optional().nullable(),
+        weightUnit: z.string().optional(),
+        imageIndex: z.number().optional(),
+        optionValues: z.array(z.string()),
+        inventoryTransactions: z
+          .array(
+            z.object({
+              variantId: z.string(),
+              storeId: z.string(),
+              quantityChange: z.number().optional(),
+              reason: z.string().optional(),
+              createdAt: z.date().optional(),
+            }),
+          )
+          .optional(),
+      }),
+    )
+    .optional(),
   tags: z.array(z.string()).optional(),
 });

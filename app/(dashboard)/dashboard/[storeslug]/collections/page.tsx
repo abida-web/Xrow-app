@@ -98,8 +98,8 @@ const CollectionsPage = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="flex gap-2 items-center font-semibold text-2xl">
-          <Tags size={24} />
+        <h1 className="flex gap-2 items-center font-semibold text-xl">
+          <Tags size={20} />
           <span>Collections</span>
         </h1>
         <Link href={`/dashboard/${storeslug}/collections/new`}>
