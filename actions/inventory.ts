@@ -26,7 +26,7 @@ export const getInventory = async () => {
     const variants = await db
       .select({
         id: productVariants.id,
-        name: productVariants.name,
+        name: productVariants.title,
         sku: productVariants.sku,
         price: productVariants.price,
         inventoryQuantity: productVariants.inventoryQuantity,
@@ -35,7 +35,7 @@ export const getInventory = async () => {
       .from(productVariants)
       .innerJoin(products, eq(productVariants.productId, products.id))
       .where(eq(products.storeId, storeOwner.id))
-      .orderBy(productVariants.name);
+      .orderBy(productVariants.title);
 
     return variants;
   } catch (error) {

@@ -6,7 +6,6 @@ import { auth } from "@/lib/auth";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import Sidebar from "../../_components/Sidebar";
 import UnifiedTopbar from "../../_components/Topbar";
 
 const StoreLayout = async ({
@@ -42,15 +41,8 @@ const StoreLayout = async ({
       {/* Top Bar - Full Width */}
       <UnifiedTopbar storeSlug={storeslug} />
 
-      {/* Sidebar and Main Content */}
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* Mobile sidebar - overlay mode */}
-
-        {/* Main content - always takes remaining space */}
-        <main className="flex-1 overflow-auto">
-          <div className="p-3">{children}</div>
-        </main>
-      </div>
+      {/* Main content - always takes remaining space */}
+      <main className="p-5">{children}</main>
     </div>
   );
 };

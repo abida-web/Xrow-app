@@ -7,18 +7,17 @@ import {
   collections,
   inventoryTransactions,
   productImages,
-  productOptions,
-  productOptionsValues,
   products,
   productTags,
   productVariants,
   store,
   storeSettings,
-  variantOptionValues,
 } from "./schema";
+
 export const categoriesRelations = relations(categories, ({ many }) => ({
   products: many(products),
 }));
+
 export const productsRelations = relations(products, ({ one, many }) => ({
   store: one(store, {
     fields: [products.storeId],
@@ -28,14 +27,13 @@ export const productsRelations = relations(products, ({ one, many }) => ({
     fields: [products.categoryId],
     references: [categories.id],
   }),
-
   images: many(productImages),
   variants: many(productVariants),
-  options: many(productOptions),
   tags: many(productTags),
   collectionProducts: many(collectionProducts),
   catalogProducts: many(catalogProducts),
 }));
+
 export const productImagesRelations = relations(
   productImages,
   ({ one, many }) => ({
@@ -43,10 +41,11 @@ export const productImagesRelations = relations(
       fields: [productImages.productId],
       references: [products.id],
     }),
-    varients: many(productVariants),
+    variants: many(productVariants),
   }),
 );
-export const productVarientsRelations = relations(
+
+export const productVariantsRelations = relations(
   productVariants,
   ({ one, many }) => ({
     product: one(products, {
@@ -57,56 +56,25 @@ export const productVarientsRelations = relations(
       fields: [productVariants.imageId],
       references: [productImages.id],
     }),
-    optionValues: many(variantOptionValues),
     inventoryTransactions: many(inventoryTransactions),
   }),
 );
-export const productOptionsRelations = relations(
-  productOptions,
-  ({ one, many }) => ({
-    product: one(products, {
-      fields: [productOptions.productId],
-      references: [products.id],
-    }),
-    values: many(productOptionsValues),
-  }),
-);
-export const productOptionValuesRelations = relations(
-  productOptionsValues,
-  ({ one, many }) => ({
-    option: one(productOptions, {
-      fields: [productOptionsValues.optionId],
-      references: [productOptions.id],
-    }),
-    variants: many(productVariants),
-  }),
-);
-export const variantOptionValuesRelations = relations(
-  variantOptionValues,
-  ({ one }) => ({
-    varient: one(productVariants, {
-      fields: [variantOptionValues.variantId],
-      references: [productVariants.id],
-    }),
-    optionValue: one(productOptionsValues, {
-      fields: [variantOptionValues.optionValueId],
-      references: [productOptionsValues.id],
-    }),
-  }),
-);
+
 export const productTagRelations = relations(productTags, ({ one }) => ({
   product: one(products, {
     fields: [productTags.productId],
     references: [products.id],
   }),
 }));
+
 export const collectionsRelations = relations(collections, ({ one, many }) => ({
   store: one(store, {
     fields: [collections.storeId],
     references: [store.id],
   }),
-  collectionProducts: many(collectionProducts), // ✅ This is correct
+  collectionProducts: many(collectionProducts),
 }));
+
 export const collectionProductsRelations = relations(
   collectionProducts,
   ({ one }) => ({
@@ -120,7 +88,8 @@ export const collectionProductsRelations = relations(
     }),
   }),
 );
-export const iventoryTransactionsRelations = relations(
+
+export const inventoryTransactionsRelations = relations(
   inventoryTransactions,
   ({ one }) => ({
     variant: one(productVariants, {
@@ -129,6 +98,7 @@ export const iventoryTransactionsRelations = relations(
     }),
   }),
 );
+
 export const storeRelations = relations(store, ({ one, many }) => ({
   settings: one(storeSettings, {
     fields: [store.id],
@@ -138,24 +108,21 @@ export const storeRelations = relations(store, ({ one, many }) => ({
   catalogs: many(catalogs),
 }));
 
-// StoreSettings relations
 export const storeSettingsRelations = relations(storeSettings, ({ one }) => ({
   store: one(store, {
     fields: [storeSettings.storeId],
     references: [store.id],
   }),
 }));
+
 export const catalogsRelations = relations(catalogs, ({ one, many }) => ({
-  // Relation to Store
   store: one(store, {
     fields: [catalogs.storeId],
     references: [store.id],
   }),
-  // Relation to CatalogProducts (junction table)
   catalogProducts: many(catalogProducts),
 }));
 
-// CatalogProducts relations (junction table)
 export const catalogProductsRelations = relations(
   catalogProducts,
   ({ one }) => ({
