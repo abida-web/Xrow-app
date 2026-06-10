@@ -1,9 +1,23 @@
-import { Product } from "@/types";
+// stores/product-create-store.ts
 import { create } from "zustand";
-import { shallow } from "zustand/shallow";
 
 interface ImageType {
   url: string;
+}
+
+interface VariantType {
+  title: string;
+  option1Value?: string;
+  option2Value?: string;
+  option3Value?: string;
+  sku?: string;
+  barcode?: string;
+  price: number;
+  compareAtPrice?: number;
+  inventoryQuantity: number;
+  weight?: number | null;
+  weightUnit?: string;
+  imageIndex?: number;
 }
 
 interface ProductFormData {
@@ -14,16 +28,12 @@ interface ProductFormData {
   status: string;
   vendor: string;
   productType: string;
+  option1Name?: string;
+  option2Name?: string;
+  option3Name?: string;
   images: ImageType[];
-  options: any[];
-  variants: any[];
+  variants: VariantType[];
   tags: string[];
-}
-
-interface ProductsPageProps {
-  params: Promise<{
-    storeslug: string;
-  }>;
 }
 
 interface ProductStore {
@@ -33,13 +43,7 @@ interface ProductStore {
   uploadProgress: Record<string, number>;
 
   // Basic actions
-  setName: (name: string) => void;
-  setDescription: (description: string) => void;
-  setSlug: (slug: string) => void;
-  setCategoryId: (categoryId: string) => void;
   setFormData: (data: Partial<ProductFormData>) => void;
-
-  // Optimized field update
   updateField: (field: keyof ProductFormData, value: any) => void;
 
   // Image actions
@@ -53,12 +57,7 @@ interface ProductStore {
   // Variant actions
   addVariant: () => void;
   removeVariant: (index: number) => void;
-  updateVariant: (index: number, field: string, value: any) => void;
-
-  // Option actions
-  addOption: () => void;
-  removeOption: (index: number) => void;
-  updateOption: (index: number, field: string, value: any) => void;
+  updateVariant: (index: number, field: keyof VariantType, value: any) => void;
 }
 
 const initialState: ProductFormData = {
@@ -69,20 +68,24 @@ const initialState: ProductFormData = {
   status: "draft",
   vendor: "",
   productType: "",
+  option1Name: "",
+  option2Name: "",
+  option3Name: "",
   images: [],
-  options: [],
   variants: [
     {
-      name: "Default Variant",
+      title: "",
+      option1Value: "",
+      option2Value: "",
+      option3Value: "",
       sku: "",
       barcode: "",
       price: 0,
+      compareAtPrice: undefined,
       inventoryQuantity: 0,
       weight: null,
       weightUnit: "kg",
-      imageId: null,
       imageIndex: undefined,
-      optionValues: [],
     },
   ],
   tags: [],
@@ -94,32 +97,11 @@ export const useProductStore = create<ProductStore>()((set, get) => ({
   isLoading: false,
   uploadProgress: {},
 
-  setName: (name) =>
-    set((state) => ({
-      formData: { ...state.formData, name },
-    })),
-
-  setDescription: (description) =>
-    set((state) => ({
-      formData: { ...state.formData, description },
-    })),
-
-  setSlug: (slug) =>
-    set((state) => ({
-      formData: { ...state.formData, slug },
-    })),
-
-  setCategoryId: (categoryId) =>
-    set((state) => ({
-      formData: { ...state.formData, categoryId },
-    })),
-
   setFormData: (data) =>
     set((state) => ({
       formData: { ...state.formData, ...data },
     })),
 
-  // Optimized field update - more efficient than setFormData for single fields
   updateField: (field, value) =>
     set((state) => ({
       formData: { ...state.formData, [field]: value },
@@ -188,7 +170,6 @@ export const useProductStore = create<ProductStore>()((set, get) => ({
   handleFileUpload: async (files) => {
     if (!files || files.length === 0) return;
 
-    // Show previews immediately for better UX
     const newPreviewUrls = Array.from(files).map((file) =>
       URL.createObjectURL(file),
     );
@@ -197,7 +178,6 @@ export const useProductStore = create<ProductStore>()((set, get) => ({
       isLoading: true,
     });
 
-    // Upload in background
     const uploadedImages: ImageType[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -207,7 +187,6 @@ export const useProductStore = create<ProductStore>()((set, get) => ({
       }
     }
 
-    // Update with actual URLs
     set((state) => ({
       formData: {
         ...state.formData,
@@ -224,48 +203,22 @@ export const useProductStore = create<ProductStore>()((set, get) => ({
         variants: [
           ...state.formData.variants,
           {
-            name: `Variant ${state.formData.variants.length + 1}`,
+            title: "",
+            option1Value: "",
+            option2Value: "",
+            option3Value: "",
             sku: "",
             barcode: "",
             price: 0,
+            compareAtPrice: undefined,
             inventoryQuantity: 0,
             weight: null,
             weightUnit: "kg",
-            imageId: null,
             imageIndex: undefined,
-            optionValues: [],
           },
         ],
       },
     })),
-
-  addOption: () =>
-    set((state) => ({
-      formData: {
-        ...state.formData,
-        options: [...state.formData.options, { name: "", values: [""] }],
-      },
-    })),
-
-  removeOption: (index) =>
-    set((state) => ({
-      formData: {
-        ...state.formData,
-        options: state.formData.options.filter((_, i) => i !== index),
-      },
-    })),
-
-  updateOption: (index: number, field: string, value: any) =>
-    set((state) => {
-      const updatedOptions = [...state.formData.options];
-      updatedOptions[index] = { ...updatedOptions[index], [field]: value };
-      return {
-        formData: {
-          ...state.formData,
-          options: updatedOptions,
-        },
-      };
-    }),
 
   removeVariant: (index: number) =>
     set((state) => ({

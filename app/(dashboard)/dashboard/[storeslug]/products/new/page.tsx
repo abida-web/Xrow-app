@@ -21,8 +21,9 @@ import { useProductStore } from "@/stores/product-create-store";
 import { toast } from "sonner";
 import { ImagesSection } from "@/app/(dashboard)/_components/ImageSection";
 import { VariantsSection } from "@/app/(dashboard)/_components/VarientSection";
-import { OptionsSection } from "@/app/(dashboard)/_components/OptionSection";
+
 import { generateSlug } from "@/modules/utils";
+import ProductForm from "@/app/(dashboard)/_components/ProductForm";
 
 interface CategoryProps {
   id: string;
@@ -85,7 +86,6 @@ const NewPage = () => {
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       setIsSubmitting(true);
-      e.preventDefault();
       const res = await fetch("/api/dashboard/product", {
         method: "POST",
         headers: {
@@ -98,6 +98,7 @@ const NewPage = () => {
         setIsSubmitting(false);
       } else {
         toast.error("Failed to add product");
+        setIsSubmitting(false);
       }
     },
     [formData, router],
@@ -139,173 +140,7 @@ const NewPage = () => {
     [formData.tags, removeTag],
   );
 
-  return (
-    <div className="overflow-hidden">
-      <h1 className="flex gap-2 items-center font-semibold">
-        <Tags size={20} />
-        <span>Add Product</span>
-      </h1>
-
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-[600px_1fr] gap-5 mt-3"
-      >
-        {/* Left Column */}
-        <div className="flex flex-col gap-5">
-          {/* Basic Info Card */}
-          <Card className="p-3">
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <Label className="text-sm">Title</Label>
-                <Input
-                  type="text"
-                  name="name"
-                  placeholder="Short sleeve t-shirt"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <Label className="text-sm">Slug</Label>
-                <Input
-                  type="text"
-                  name="slug"
-                  placeholder="short-sleeve-t-shirt"
-                  value={formData.slug}
-                  onChange={handleInputChange}
-                  disabled
-                  className="bg-gray-50"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <Label className="text-sm">Description</Label>
-                <Textarea
-                  name="description"
-                  rows={5}
-                  placeholder="Product description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <ImagesSection />
-
-              <div className="flex flex-col gap-1">
-                <Label className="text-sm">Category</Label>
-                <Select
-                  value={formData.categoryId}
-                  onValueChange={(value) => updateField("categoryId", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>{categoryItems}</SelectContent>
-                </Select>
-              </div>
-            </div>
-          </Card>
-
-          <VariantsSection />
-          <OptionsSection />
-        </div>
-
-        {/* Right Column - Additional Info */}
-        <Card className="p-5 h-fit w-70">
-          <h3 className="font-medium mb-4">Additional Info</h3>
-
-          <div className="flex flex-col gap-4">
-            <div>
-              <Label className="text-xs">Product Type</Label>
-              <Input
-                type="text"
-                placeholder="Shoes, Clothes, Accessories"
-                value={formData.productType}
-                onChange={(e) => updateField("productType", e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs">Vendor</Label>
-              <Input
-                type="text"
-                placeholder="Nike, Dior, Pandora"
-                value={formData.vendor}
-                onChange={(e) => updateField("vendor", e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => updateField("status", value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel className="text-sm font-semibold mb-2">
-                      Statuses
-                    </SelectLabel>
-
-                    <SelectItem value="active">
-                      <div className="flex flex-col gap-1 py-1">
-                        <span className="font-medium">Active</span>
-                        <span className="text-xs text-gray-500">
-                          Sell via selected sales channels and markets
-                        </span>
-                      </div>
-                    </SelectItem>
-
-                    <SelectItem value="draft">
-                      <div className="flex flex-col gap-1 py-1">
-                        <span className="font-medium">Draft</span>
-                        <span className="text-xs text-gray-500">
-                          Not visible on selected sales channels or markets
-                        </span>
-                      </div>
-                    </SelectItem>
-
-                    <SelectItem value="unlisted">
-                      <div className="flex flex-col gap-1 py-1">
-                        <span className="font-medium">Unlisted</span>
-                        <span className="text-xs text-gray-500">
-                          Accessible only by direct link
-                        </span>
-                      </div>
-                    </SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-xs">Tags</Label>
-              <Input
-                type="text"
-                placeholder="fashion, house, shoes"
-                value={formData.tags.join(", ")}
-                onChange={handleTagsChange}
-              />
-            </div>
-
-            {tagsDisplay}
-          </div>
-        </Card>
-
-        <Button
-          disabled={isSubmitting === true}
-          type="submit"
-          className="text-sm bg-[#06102c] text-white px-3 py-1 rounded hover:bg-[#030d27]"
-        >
-          Save
-        </Button>
-      </form>
-    </div>
-  );
+  return <ProductForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />;
 };
 
 export default NewPage;

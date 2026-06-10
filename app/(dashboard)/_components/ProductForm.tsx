@@ -17,10 +17,9 @@ import { Tags, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProductStore } from "@/stores/product-create-store";
 import { ImagesSection } from "./ImageSection";
-import { VariantsSection } from "./VarientSection";
-import { OptionsSection } from "./OptionSection";
 import { generateSlug } from "@/modules/utils";
 import { getAllCategories } from "@/actions/getCategories";
+import { VariantsSection } from "./VarientSection";
 
 interface CategoryProps {
   id: string;
@@ -30,7 +29,7 @@ interface CategoryProps {
 interface ProductFormProps {
   onSubmit: (formData: any) => Promise<void>;
   isSubmitting?: boolean;
-  initialData?: any; // Optional - if provided, use for editing
+  initialData?: any;
 }
 
 const ProductForm = ({
@@ -44,14 +43,14 @@ const ProductForm = ({
   const setFormData = useProductStore((state) => state.setFormData);
   const resetForm = useProductStore((state) => state.resetForm);
 
-  // Load initial data if in edit mode
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
     } else {
-      resetForm(); // Clear form for new product
+      resetForm();
     }
   }, [initialData, setFormData, resetForm]);
+
   useEffect(() => {
     const fetchCategories = async () => {
       const categoriesList = await getAllCategories();
@@ -59,11 +58,12 @@ const ProductForm = ({
     };
     fetchCategories();
   }, []);
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Call the parent's onSubmit with the form data
     await onSubmit(formData);
   };
+
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
@@ -130,173 +130,172 @@ const ProductForm = ({
   );
 
   return (
-    <div className="overflow-hidden">
-      <h1 className="flex gap-2 items-center font-semibold">
-        <Tags size={20} />
-        <span>{initialData ? "Edit Product" : "Create New Product"}</span>
-      </h1>
+    <div className="w-full py-8">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="flex items-center gap-2 text-xl font-semibold">
+          <Tags size={20} />
+          <span>{initialData ? "Edit Product" : "Create Product"}</span>
+        </h1>
+      </div>
 
-      <form
-        onSubmit={handleFormSubmit}
-        className="grid grid-cols-[600px_1fr] gap-5 mt-3"
-      >
-        {/* Left Column */}
-        <div className="flex flex-col gap-5">
-          {/* Basic Info Card */}
-          <Card className="p-3">
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
+      <form onSubmit={handleFormSubmit} className="space-y-6">
+        {/* Two column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main content - 2/3 width */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Basic Info */}
+            <Card className="p-5 space-y-4">
+              <div>
                 <Label className="text-sm">Title</Label>
                 <Input
-                  type="text"
                   name="name"
                   placeholder="Short sleeve t-shirt"
                   value={formData.name || ""}
                   onChange={handleInputChange}
+                  className="mt-1"
                 />
               </div>
 
-              <div className="flex flex-col gap-1">
+              <div>
                 <Label className="text-sm">Slug</Label>
                 <Input
-                  type="text"
                   name="slug"
                   placeholder="short-sleeve-t-shirt"
                   value={formData.slug || ""}
                   onChange={handleInputChange}
                   disabled
-                  className="bg-gray-50"
+                  className="mt-1 bg-gray-50"
                 />
               </div>
 
-              <div className="flex flex-col gap-1">
+              <div>
                 <Label className="text-sm">Description</Label>
                 <Textarea
                   name="description"
-                  rows={5}
+                  rows={4}
                   placeholder="Product description"
                   value={formData.description || ""}
                   onChange={handleInputChange}
+                  className="mt-1"
                 />
               </div>
 
-              <ImagesSection />
-
-              <div className="flex flex-col gap-1">
+              <div>
                 <Label className="text-sm">Category</Label>
                 <Select
                   value={formData.categoryId || ""}
                   onValueChange={(value) => updateField("categoryId", value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>{categoryItems}</SelectContent>
                 </Select>
               </div>
-            </div>
-          </Card>
+            </Card>
 
-          <VariantsSection />
-          <OptionsSection />
+            {/* Options Card */}
+            <Card className="p-5">
+              <div className="mb-3">
+                <h3 className="font-medium">Options</h3>
+                <p className="text-xs text-gray-500">
+                  Size, Color, Material (max 3)
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Input
+                  placeholder="Option 1 (e.g., Size)"
+                  value={formData.option1Name || ""}
+                  onChange={(e) => updateField("option1Name", e.target.value)}
+                />
+                <Input
+                  placeholder="Option 2 (e.g., Color)"
+                  value={formData.option2Name || ""}
+                  onChange={(e) => updateField("option2Name", e.target.value)}
+                />
+                <Input
+                  placeholder="Option 3 (e.g., Material)"
+                  value={formData.option3Name || ""}
+                  onChange={(e) => updateField("option3Name", e.target.value)}
+                />
+              </div>
+            </Card>
+
+            {/* Images */}
+            <ImagesSection />
+
+            {/* Variants */}
+            <VariantsSection />
+          </div>
+
+          {/* Sidebar - 1/3 width */}
+          <div className="space-y-6">
+            <Card className="p-5 space-y-4">
+              <div>
+                <Label className="text-sm">Product Type</Label>
+                <Input
+                  placeholder="Shoes, Clothes, Accessories"
+                  value={formData.productType || ""}
+                  onChange={(e) => updateField("productType", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label className="text-sm">Vendor</Label>
+                <Input
+                  placeholder="Nike, Dior, Pandora"
+                  value={formData.vendor || ""}
+                  onChange={(e) => updateField("vendor", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label className="text-sm">Status</Label>
+                <Select
+                  value={formData.status || "draft"}
+                  onValueChange={(value) => updateField("status", value)}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="unlisted">Unlisted</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-sm">Tags</Label>
+                <Input
+                  placeholder="fashion, house, shoes"
+                  value={formData.tags?.join(", ") || ""}
+                  onChange={handleTagsChange}
+                  className="mt-1"
+                />
+                {tagsDisplay}
+              </div>
+            </Card>
+          </div>
         </div>
 
-        {/* Right Column - Additional Info */}
-        <Card className="p-5 h-fit w-70">
-          <h3 className="font-medium mb-4">Additional Info</h3>
-
-          <div className="flex flex-col gap-4">
-            <div>
-              <Label className="text-xs">Product Type</Label>
-              <Input
-                type="text"
-                placeholder="Shoes, Clothes, Accessories"
-                value={formData.productType || ""}
-                onChange={(e) => updateField("productType", e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs">Vendor</Label>
-              <Input
-                type="text"
-                placeholder="Nike, Dior, Pandora"
-                value={formData.vendor || ""}
-                onChange={(e) => updateField("vendor", e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs">Status</Label>
-              <Select
-                value={formData.status || "draft"}
-                onValueChange={(value) => updateField("status", value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel className="text-sm font-semibold mb-2">
-                      Statuses
-                    </SelectLabel>
-
-                    <SelectItem value="active">
-                      <div className="flex flex-col gap-1 py-1">
-                        <span className="font-medium">Active</span>
-                        <span className="text-xs text-gray-500">
-                          Sell via selected sales channels and markets
-                        </span>
-                      </div>
-                    </SelectItem>
-
-                    <SelectItem value="draft">
-                      <div className="flex flex-col gap-1 py-1">
-                        <span className="font-medium">Draft</span>
-                        <span className="text-xs text-gray-500">
-                          Not visible on selected sales channels or markets
-                        </span>
-                      </div>
-                    </SelectItem>
-
-                    <SelectItem value="unlisted">
-                      <div className="flex flex-col gap-1 py-1">
-                        <span className="font-medium">Unlisted</span>
-                        <span className="text-xs text-gray-500">
-                          Accessible only by direct link
-                        </span>
-                      </div>
-                    </SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-xs">Tags</Label>
-              <Input
-                type="text"
-                placeholder="fashion, house, shoes"
-                value={formData.tags?.join(", ") || ""}
-                onChange={handleTagsChange}
-              />
-            </div>
-
-            {tagsDisplay}
-          </div>
-        </Card>
-
-        <Button
-          disabled={isSubmitting}
-          type="submit"
-          className="text-sm bg-[#06102c] text-white px-3 py-1 rounded hover:bg-[#030d27]"
-        >
-          {isSubmitting
-            ? "Saving..."
-            : initialData
-              ? "Update Product"
-              : "Create Product"}
-        </Button>
+        {/* Actions */}
+        <div className="flex justify-end gap-3 pt-4">
+          <Button type="button" variant="outline" onClick={resetForm}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="bg-[#06102c] hover:bg-[#030d27]"
+          >
+            {isSubmitting ? "Saving..." : initialData ? "Update" : "Create"}
+          </Button>
+        </div>
       </form>
     </div>
   );

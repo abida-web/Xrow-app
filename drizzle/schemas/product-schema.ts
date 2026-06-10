@@ -10,20 +10,21 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { store } from "./store-schema";
+
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
 export const products = pgTable("products", {
   id: uuid("id").defaultRandom().primaryKey(),
   storeId: uuid("store_id")
-    .references(() => store.id, {
-      onDelete: "cascade",
-    })
+    .references(() => store.id, { onDelete: "cascade" })
     .notNull(),
-  categoryId: uuid("category_id") // 👈 ADD THIS LINE
-    .references(() => categories.id, { onDelete: "set null" }), // 👈 ADD THIS LINE
+  categoryId: uuid("category_id").references(() => categories.id, {
+    onDelete: "set null",
+  }),
   name: text("name").notNull(),
   description: text("description"),
   slug: text("slug").notNull(),
@@ -31,64 +32,50 @@ export const products = pgTable("products", {
   vendor: text("vendor"),
   productType: text("product_type"),
   isPublished: boolean("is_published").default(true),
+
+  // Shopify-style: Store option names at product level
+  option1Name: text("option1_name"), // e.g., "Size"
+  option2Name: text("option2_name"), // e.g., "Color"
+  option3Name: text("option3_name"), // e.g., "Material"
+
   createAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
 export const productImages = pgTable("product_images", {
   id: uuid("id").defaultRandom().primaryKey(),
   productId: uuid("product_id")
-    .references(() => products.id, {
-      onDelete: "cascade",
-    })
+    .references(() => products.id, { onDelete: "cascade" })
     .notNull(),
   url: text("url").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
 export const productVariants = pgTable("product_variants", {
   id: uuid("id").defaultRandom().primaryKey(),
   productId: uuid("product_id")
     .references(() => products.id, { onDelete: "cascade" })
     .notNull(),
-  name: text("name").notNull(),
+
+  // Shopify-style: Store option values directly on variant
+  option1Value: text("option1_value"), // e.g., "Small"
+  option2Value: text("option2_value"), // e.g., "Red"
+  option3Value: text("option3_value"), // e.g., "Cotton"
+  title: text("title"),
   sku: text("sku"),
   barcode: text("barcode"),
   price: numeric("price").notNull(),
+  compareAtPrice: numeric("compare_at_price"), // Shopify field for sale pricing
   inventoryQuantity: integer("inventory_quantity"),
   weight: real("weight"),
   weightUnit: text("weight_unit"),
   imageId: uuid("image_id").references(() => productImages.id),
+
   createAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
-export const productOptions = pgTable("productOptions", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  productId: uuid("product_id")
-    .references(() => products.id, { onDelete: "cascade" })
-    .notNull(),
-  name: text("name").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-export const productOptionsValues = pgTable("product_option_value", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  optionId: uuid("option_id")
-    .references(() => productOptions.id, { onDelete: "cascade" })
-    .notNull(),
-  value: text("value").notNull(),
-});
-export const variantOptionValues = pgTable(
-  "variant_option_values", // Changed table name from "values" to something more descriptive
-  {
-    variantId: uuid("variant_id")
-      .references(() => productVariants.id, { onDelete: "cascade" })
-      .notNull(),
-    optionValueId: uuid("option_value_id") // Fixed: changed from "variant_id" to "option_value_id"
-      .references(() => productOptionsValues.id, { onDelete: "cascade" })
-      .notNull(),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.variantId, table.optionValueId] }),
-  }),
-);
+
+// Collections remain the same
 export const collections = pgTable("collections", {
   id: uuid("id").defaultRandom().primaryKey(),
   storeId: uuid("store_id").references(() => store.id, { onDelete: "cascade" }),
@@ -100,6 +87,7 @@ export const collections = pgTable("collections", {
   slug: text("slug").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
 export const collectionProducts = pgTable(
   "collections_products",
   {
@@ -111,11 +99,10 @@ export const collectionProducts = pgTable(
       .notNull(),
   },
   (table) => ({
-    pk: primaryKey({
-      columns: [table.collectionId, table.productId],
-    }),
+    pk: primaryKey({ columns: [table.collectionId, table.productId] }),
   }),
 );
+
 export const productTags = pgTable("product_tags", {
   id: uuid("id").defaultRandom().primaryKey(),
   productId: uuid("product_id").references(() => products.id, {
