@@ -26,11 +26,6 @@ export async function getProduct(productId: string) {
     with: {
       variants: true,
       images: true,
-      options: {
-        with: {
-          values: true,
-        },
-      },
       tags: true,
     },
   });
