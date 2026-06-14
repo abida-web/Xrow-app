@@ -1,9 +1,8 @@
 import { db } from "@/drizzle/db";
-import { collectionProducts, collections, store } from "@/drizzle/schema";
-import { auth } from "@/lib/auth";
+import { collectionProducts, collections } from "@/drizzle/schema";
 import { and, eq } from "drizzle-orm";
-import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { getVerifiedStoreBySlug } from "@/lib/store-utils";
 
 export async function PATCH(
   req: NextRequest,
@@ -16,22 +15,28 @@ export async function PATCH(
       { status: 400 },
     );
   }
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
-  const storeOwner = await db.query.store.findFirst({
-    where: eq(store.ownerId, session.user.id),
-  });
-  if (!storeOwner) {
-    return NextResponse.json({ message: "Store not found" }, { status: 404 });
-  }
   const body = await req.json();
-  const { name, description, type, publishedScope, image, productIds } = body;
+  const {
+    storeslug,
+    name,
+    description,
+    type,
+    publishedScope,
+    image,
+    productIds,
+  } = body;
+  if (!storeslug) {
+    return NextResponse.json(
+      { message: "storeslug is required" },
+      { status: 400 },
+    );
+  }
+
+  const storeOwner = await getVerifiedStoreBySlug(storeslug);
   const update = await db
     .update(collections)
     .set({
-      storeId: storeOwner?.id,
+      storeId: storeOwner.id,
       name,
       description,
       type,

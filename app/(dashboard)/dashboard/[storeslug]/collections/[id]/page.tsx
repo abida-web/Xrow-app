@@ -19,7 +19,8 @@ interface FormattedCollectionData {
 
 const CollectionEditPage = () => {
   const params = useParams();
-  const { id, storeslug } = params;
+  const { id } = params;
+  const storeslug = String(params.storeslug);
   const [isLoading, setIsLoading] = useState(true);
   const [initialData, setInitialData] =
     useState<FormattedCollectionData | null>(null);
@@ -37,7 +38,7 @@ const CollectionEditPage = () => {
       }
 
       try {
-        const collectionData = await getCollection(id);
+        const collectionData = await getCollection(id, storeslug);
 
         const formattedCollection: FormattedCollectionData = {
           name: collectionData.name || "",
@@ -75,7 +76,7 @@ const CollectionEditPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, storeslug }),
       });
 
       const data = await response.json();
@@ -97,7 +98,7 @@ const CollectionEditPage = () => {
 
         // Optionally refresh the collections list
         if (fetchCollections) {
-          await fetchCollections();
+          await fetchCollections(storeslug);
         }
 
         toast.success("Collection updated successfully");

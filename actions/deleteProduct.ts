@@ -2,26 +2,13 @@
 
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { products, store } from "@/drizzle/schema";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { products } from "@/drizzle/schema";
 import { revalidatePath } from "next/cache";
+import { getVerifiedStoreBySlug } from "@/lib/store-utils";
 
-export async function deleteProducts(productIds: string[]) {
+export async function deleteProducts(storeslug: string, productIds: string[]) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session?.user?.id) {
-      throw new Error("Unauthorized");
-    }
-
-    const shopOwner = await db.query.store.findFirst({
-      where: eq(store.ownerId, session.user.id),
-    });
-
-    if (!shopOwner?.id) {
-      throw new Error("Store not found");
-    }
+    const shopOwner = await getVerifiedStoreBySlug(storeslug);
 
     console.log("Deleting products:", productIds);
     console.log("Store ID:", shopOwner.id);

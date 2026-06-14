@@ -5,29 +5,17 @@ import {
   catalogs,
   collectionProducts,
   collections,
-  store,
 } from "@/drizzle/schema";
-import { auth } from "@/lib/auth";
 import { and, eq, inArray } from "drizzle-orm";
-import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { getVerifiedStoreBySlug } from "@/lib/store-utils";
 
 export async function removeFromCollection(
+  storeslug: string,
   productIds: string[],
   collectionId: string,
 ) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
-
-  const storeOwner = await db.query.store.findFirst({
-    where: eq(store.ownerId, session.user.id),
-  });
-
-  if (!storeOwner) {
-    throw new Error("Store not found");
-  }
+  const storeOwner = await getVerifiedStoreBySlug(storeslug);
 
   const collection = await db.query.collections.findFirst({
     where: and(

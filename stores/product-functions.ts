@@ -62,7 +62,7 @@ interface ProductsStore {
   setProducts: (products: Product[]) => void;
   setLoading: (loading: boolean) => void;
   fetchProducts: (storeslug: string) => Promise<void>;
-  fetchCollections: () => Promise<void>;
+  fetchCollections: (storeslug: string) => Promise<void>;
 
   // Actions - Row selection
   setSelectRow: (
@@ -87,7 +87,7 @@ interface ProductsStore {
   ) => Promise<void>;
 
   // Actions - Catalog operations
-  fetchCatalogs: () => Promise<void>;
+  fetchCatalogs: (storeslug: string) => Promise<void>;
   handleAssignProductToCatalog: (
     catalogId: string,
     storeslug: string,
@@ -220,11 +220,13 @@ export const useProductsStore = create<ProductsStore>()((set, get) => ({
       state.setLoading(false);
     }
   },
-  fetchCollections: async () => {
+  fetchCollections: async (storeslug: string) => {
     const state = get();
     try {
       state.setLoading(true);
-      const res = await fetch(`/api/dashboard/collections`);
+      const res = await fetch(
+        `/api/dashboard/collections?storeslug=${encodeURIComponent(storeslug)}`,
+      );
       const data = await res.json();
       state.setCollections(data);
     } catch (error) {
@@ -282,7 +284,7 @@ export const useProductsStore = create<ProductsStore>()((set, get) => ({
     const { selectRow, products, setProducts, clearSelection } = get();
     const productIds = Array.from(selectRow);
 
-    const deleted = await deleteProducts(productIds);
+    const deleted = await deleteProducts(storeslug, productIds);
 
     if (deleted.success) {
       setProducts(products.filter((p) => !selectRow.has(p.id)));
@@ -298,7 +300,7 @@ export const useProductsStore = create<ProductsStore>()((set, get) => ({
       get();
     const productIds = Array.from(selectRow);
 
-    const update = await updatedProductStatus(status, productIds);
+    const update = await updatedProductStatus(storeslug, status, productIds);
 
     if (update.success) {
       toast.success(
@@ -337,8 +339,8 @@ export const useProductsStore = create<ProductsStore>()((set, get) => ({
   },
 
   // Catalog operations
-  fetchCatalogs: async () => {
-    const catalogsList = await getAllCatalogs();
+  fetchCatalogs: async (storeslug: string) => {
+    const catalogsList = await getAllCatalogs(storeslug);
     set({ catalogs: catalogsList });
   },
 
@@ -346,7 +348,7 @@ export const useProductsStore = create<ProductsStore>()((set, get) => ({
     const { selectRow, fetchProducts, clearSelection } = get();
     const productIds = Array.from(selectRow);
 
-    const update = await addProductToCatalog(productIds, catalogId);
+    const update = await addProductToCatalog(storeslug, productIds, catalogId);
 
     if (update.success) {
       toast.success(
@@ -363,7 +365,7 @@ export const useProductsStore = create<ProductsStore>()((set, get) => ({
     const { selectRow, fetchProducts, clearSelection } = get();
     const productIds = Array.from(selectRow);
 
-    const update = await excludeFromCatalog(productIds, catalogId);
+    const update = await excludeFromCatalog(storeslug, productIds, catalogId);
 
     if (update.success) {
       toast.success(
@@ -379,7 +381,11 @@ export const useProductsStore = create<ProductsStore>()((set, get) => ({
     const { selectRow, fetchProducts, clearSelection } = get();
     const productIds = Array.from(selectRow);
 
-    const update = await addProductsToCollection(productIds, collectionId);
+    const update = await addProductsToCollection(
+      storeslug,
+      productIds,
+      collectionId,
+    );
 
     if (update.success) {
       toast.success(
@@ -395,7 +401,11 @@ export const useProductsStore = create<ProductsStore>()((set, get) => ({
     const { selectRow, fetchProducts, clearSelection } = get();
     const productIds = Array.from(selectRow);
 
-    const update = await removeFromCollection(productIds, collectionId);
+    const update = await removeFromCollection(
+      storeslug,
+      productIds,
+      collectionId,
+    );
 
     if (update.success) {
       toast.success(

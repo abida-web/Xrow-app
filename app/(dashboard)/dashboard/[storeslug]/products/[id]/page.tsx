@@ -8,7 +8,8 @@ import { toast } from "sonner";
 const ProductEditPage = () => {
   const router = useRouter();
   const params = useParams();
-  const { id, storeslug } = params;
+  const { id } = params;
+  const storeslug = String(params.storeslug);
   const [product, setProduct] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,7 +18,7 @@ const ProductEditPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const productData = await getProduct(id as string);
+        const productData = await getProduct(id as string, storeslug);
         setProduct(productData);
       } catch (error) {
         console.error("Error fetching product:", error);

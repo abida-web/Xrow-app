@@ -1,18 +1,15 @@
 "use server";
 import { db } from "@/drizzle/db";
-import { products, store } from "@/drizzle/schema";
-import { auth } from "@/lib/auth";
+import { products } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
+import { getVerifiedStoreBySlug } from "@/lib/store-utils";
 
 export async function getAllproducts(storeslug: string) {
   if (!storeslug) {
     throw new Error("Store slug is required");
   }
 
-  const shopOwner = await db.query.store.findFirst({
-    where: eq(store.slug, storeslug),
-  });
+  const shopOwner = await getVerifiedStoreBySlug(storeslug);
 
   if (!shopOwner?.id) {
     throw new Error("Store not found");

@@ -5,7 +5,9 @@ import {
   categories,
   collectionProducts,
   collections,
-  inventoryTransactions,
+  customers,
+  inventoryLevels,
+  locations,
   productImages,
   products,
   productTags,
@@ -56,7 +58,7 @@ export const productVariantsRelations = relations(
       fields: [productVariants.imageId],
       references: [productImages.id],
     }),
-    inventoryTransactions: many(inventoryTransactions),
+    inventoryLevels: many(inventoryLevels),
   }),
 );
 
@@ -89,16 +91,6 @@ export const collectionProductsRelations = relations(
   }),
 );
 
-export const inventoryTransactionsRelations = relations(
-  inventoryTransactions,
-  ({ one }) => ({
-    variant: one(productVariants, {
-      fields: [inventoryTransactions.variantId],
-      references: [productVariants.id],
-    }),
-  }),
-);
-
 export const storeRelations = relations(store, ({ one, many }) => ({
   settings: one(storeSettings, {
     fields: [store.id],
@@ -106,6 +98,8 @@ export const storeRelations = relations(store, ({ one, many }) => ({
   }),
   products: many(products),
   catalogs: many(catalogs),
+  locations: many(locations),
+  customers: many(customers),
 }));
 
 export const storeSettingsRelations = relations(storeSettings, ({ one }) => ({
@@ -136,3 +130,29 @@ export const catalogProductsRelations = relations(
     }),
   }),
 );
+export const locationsRelations = relations(locations, ({ one, many }) => ({
+  store: one(store, {
+    fields: [locations.storeId],
+    references: [store.id],
+  }),
+  inventoryLevels: many(inventoryLevels),
+}));
+export const inventoryLevelsRelations = relations(
+  inventoryLevels,
+  ({ one, many }) => ({
+    variant: one(productVariants, {
+      fields: [inventoryLevels.variantId],
+      references: [productVariants.id],
+    }),
+    location: one(locations, {
+      fields: [inventoryLevels.locationId],
+      references: [locations.id],
+    }),
+  }),
+);
+export const customersRelations = relations(customers, ({ one }) => ({
+  store: one(store, {
+    fields: [customers.storeId],
+    references: [store.id],
+  }),
+}));

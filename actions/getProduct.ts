@@ -1,25 +1,11 @@
 "use server";
 import { db } from "@/drizzle/db";
-import { products, store } from "@/drizzle/schema";
-import { auth } from "@/lib/auth";
+import { products } from "@/drizzle/schema";
 import { and, eq } from "drizzle-orm";
-import { headers } from "next/headers";
+import { getVerifiedStoreBySlug } from "@/lib/store-utils";
 
-export async function getProduct(productId: string) {
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  // Check authentication first
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized: User not authenticated");
-  }
-
-  const shopOwner = await db.query.store.findFirst({
-    where: eq(store.ownerId, session.user.id),
-  });
-
-  if (!shopOwner?.id) {
-    throw new Error("Store not found");
-  }
+export async function getProduct(productId: string, storeslug: string) {
+  const shopOwner = await getVerifiedStoreBySlug(storeslug);
 
   const getProducts = await db.query.products.findFirst({
     where: and(eq(products.storeId, shopOwner.id), eq(products.id, productId)),

@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { createHash } from "crypto";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -22,4 +23,7 @@ export function generateSlug(shopName: string) {
     .trim()
     .replace(/[\s-]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+export function hashGiftCardCode(code: string): string {
+  return createHash("sha256").update(code).digest("hex");
 }

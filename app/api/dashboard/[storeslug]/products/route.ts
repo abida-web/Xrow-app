@@ -1,8 +1,9 @@
 // app/api/dashboard/[storeslug]/products/route.ts
 import { db } from "@/drizzle/db";
-import { products, store } from "@/drizzle/schema";
+import { products } from "@/drizzle/schema";
 import { and, eq, ilike, or, SQL } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
+import { getVerifiedStoreBySlug } from "@/lib/store-utils";
 
 export async function GET(
   request: NextRequest,
@@ -10,10 +11,7 @@ export async function GET(
 ) {
   try {
     const { storeslug } = await params;
-
-    const storeData = await db.query.store.findFirst({
-      where: eq(store.slug, storeslug),
-    });
+    const storeData = await getVerifiedStoreBySlug(storeslug);
 
     if (!storeData) {
       return NextResponse.json({ error: "Store not found" }, { status: 404 });

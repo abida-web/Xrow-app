@@ -4,30 +4,16 @@ import {
   products,
   productSalesChannels,
   salesChannels,
-  store,
 } from "@/drizzle/schema";
-import { auth } from "@/lib/auth";
 import { and, eq, inArray } from "drizzle-orm";
-import { headers } from "next/headers";
+import { getVerifiedStoreBySlug } from "@/lib/store-utils";
 
 export async function updateSalesChannelStatus(
   storeslug: string,
   productIds: string[],
   publish: boolean,
 ) {
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
-
-  const storeOwner = await db.query.store.findFirst({
-    where: eq(store.slug, storeslug),
-  });
-
-  if (!storeOwner) {
-    throw new Error("Store not found");
-  }
+  const storeOwner = await getVerifiedStoreBySlug(storeslug);
 
   // 1. Get all sales channels for this store (or just the ones you want)
   const storeChannels = await db.query.salesChannels.findMany({

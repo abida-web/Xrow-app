@@ -1,3 +1,4 @@
+// modules/types.ts
 import { z } from "zod";
 
 export const CreateProductSchema = z.object({
@@ -8,7 +9,6 @@ export const CreateProductSchema = z.object({
   categoryId: z.string(),
   productType: z.string().optional(),
 
-  // Shopify-style: Option names at product level (max 3)
   option1Name: z.string().optional(),
   option2Name: z.string().optional(),
   option3Name: z.string().optional(),
@@ -19,22 +19,33 @@ export const CreateProductSchema = z.object({
     }),
   ),
 
-  // Simplified variants with direct option values
   variants: z
     .array(
       z.object({
-        title: z.string(), // e.g., "Small / Red"
+        title: z.string(),
         option1Value: z.string().optional(),
         option2Value: z.string().optional(),
         option3Value: z.string().optional(),
         sku: z.string().optional(),
         barcode: z.string().optional(),
         price: z.number(),
-        compareAtPrice: z.number().optional(), // Sale price
+        compareAtPrice: z.number().optional(),
         inventoryQuantity: z.number().optional(),
         weight: z.number().optional().nullable(),
         weightUnit: z.string().optional(),
         imageIndex: z.number().optional(),
+        locationId: z.string().optional(),
+        inventoryLevels: z
+          .array(
+            z.object({
+              locationId: z.string(), // ADD THIS - was missing!
+              available: z.number().optional().default(0),
+              onHand: z.number().optional().default(0),
+              incoming: z.number().optional().default(0),
+              committed: z.number().optional().default(0),
+            }),
+          )
+          .optional(),
       }),
     )
     .optional(),

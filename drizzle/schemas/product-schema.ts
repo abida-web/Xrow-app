@@ -7,6 +7,7 @@ import {
   real,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 import { store } from "./store-schema";
@@ -70,7 +71,9 @@ export const productVariants = pgTable("product_variants", {
   weight: real("weight"),
   weightUnit: text("weight_unit"),
   imageId: uuid("image_id").references(() => productImages.id),
-
+  locationId: uuid("location_id").references(() => locations.id, {
+    onDelete: "set null",
+  }),
   createAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -110,19 +113,7 @@ export const productTags = pgTable("product_tags", {
   }),
   tag: text("tag").notNull(),
 });
-export const inventoryTransactions = pgTable("inventory_transactions", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  variantId: uuid("variant_id").references(() => productVariants.id, {
-    onDelete: "cascade",
-  }),
-  quantityChange: integer("quantity_change"),
 
-  storeId: uuid("store_id").references(() => store.id, {
-    onDelete: "cascade",
-  }),
-  reason: text("reason"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
 export const salesChannels = pgTable("sales_channels", {
   id: uuid("id").defaultRandom().primaryKey(),
   storeId: uuid("store_id")
@@ -185,3 +176,129 @@ export const catalogProducts = pgTable(
     pk: primaryKey({ columns: [table.catalogId, table.productId] }),
   }),
 );
+export const locations = pgTable("locations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  storeId: uuid("store_id")
+    .references(() => store.id, { onDelete: "cascade" })
+    .notNull(),
+
+  // Basic Info
+  name: text("name").notNull(), // "Main Warehouse", "NYC Store"
+  isActive: boolean("is_active").default(true),
+  isDefault: boolean("is_default").default(false), // Primary location
+
+  // Address Information
+  address1: text("address1"),
+  address2: text("address2"),
+  city: text("city"),
+  province: text("province"),
+  provinceCode: text("province_code"),
+  country: text("country"),
+  countryCode: text("country_code"),
+  zip: text("zip"),
+  phone: text("phone"),
+
+  // Metadata
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// 2. INVENTORY LEVELS (per location per variant)
+export const inventoryLevels = pgTable(
+  "inventory_levels",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    variantId: uuid("variant_id")
+      .references(() => productVariants.id, { onDelete: "cascade" })
+      .notNull(),
+    locationId: uuid("location_id")
+      .references(() => locations.id, { onDelete: "cascade" })
+      .notNull(),
+
+    // Quantities
+    available: integer("available").default(0), // Sellable stock
+    onHand: integer("on_hand").default(0), // Physical stock
+    incoming: integer("incoming").default(0), // Expected from POs
+    committed: integer("committed").default(0), // Reserved for orders
+
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    // Each variant can only have one level per location
+    uniqueVariantLocation: unique().on(table.variantId, table.locationId),
+  }),
+);
+export const customers = pgTable("customers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+
+  status: text("status").notNull().default("enabled"),
+
+  verifiedEmail: boolean("verified_email").notNull().default(false),
+
+  totalSpent: numeric("total_spent").default("0"),
+  note: text("note"),
+  storeId: uuid("store_id").references(() => store.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Gift Cards Table
+export const giftCards = pgTable("gift_cards", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  code: text("code").notNull().unique(),
+  codeHash: text("code_hash").notNull().unique(),
+
+  initialValue: numeric("initial_value").notNull(),
+  balance: numeric("balance"),
+  currency: text("currency").notNull().default("USD"),
+  storeId: uuid("store_id").references(() => store.id),
+  enabled: boolean("enabled").notNull().default(true),
+
+  customerId: uuid("customer_id").references(() => customers.id),
+  orderId: uuid("order_id"),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresOn: timestamp("expires_on"),
+
+  note: text("note"),
+  recipientEmail: text("recipient_email"),
+  recipientMessage: text("recipient_message"),
+});
+
+// Orders Table
+export const orders = pgTable("orders", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  orderNumber: text("order_number").notNull().unique(),
+
+  customerId: uuid("customer_id").references(() => customers.id),
+
+  totalPrice: numeric("total_price").notNull(),
+  currency: text("currency").notNull().default("USD"),
+
+  status: text("status").notNull().default("pending"),
+
+  // Gift card fields
+  giftCardId: uuid("gift_card_id").references(() => giftCards.id),
+  giftCardApplied: numeric("gift_card_applied"),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Gift Card Transactions Table
+export const giftCardTransactions = pgTable("gift_card_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  type: text("type").notNull(),
+  giftCardId: uuid("gift_card_id")
+    .notNull()
+    .references(() => giftCards.id),
+  orderId: uuid("order_id").references(() => orders.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

@@ -102,13 +102,15 @@ const ProductsPage = () => {
     fetchProducts,
   ]);
   useEffect(() => {
-    fetchCollections();
-  }, [storeslug]);
+    if (!storeslug) return;
+    fetchCollections(storeslug);
+  }, [storeslug, fetchCollections]);
 
   // Fetch catalogs on mount
   useEffect(() => {
-    fetchCatalogs();
-  }, [fetchCatalogs]);
+    if (!storeslug) return;
+    fetchCatalogs(storeslug);
+  }, [fetchCatalogs, storeslug]);
 
   const selectAll = getSelectAll();
   const statuses = getStatuses();

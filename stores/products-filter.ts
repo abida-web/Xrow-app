@@ -1,4 +1,5 @@
 // stores/products-filter.ts
+import { getAllCatalogs } from "@/actions/getCatlaogs";
 import { Product } from "@/types";
 import { toast } from "sonner";
 import { create } from "zustand";
@@ -65,7 +66,7 @@ interface ProductFilter {
     status: boolean,
     storeslug: string,
   ) => Promise<void>;
-  fetchCatalogs: () => Promise<void>;
+  fetchCatalogs: (storeslug: string) => Promise<void>;
   handleAssignProductToCatalog: (
     catalogId: string,
     storeslug: string,
@@ -229,9 +230,8 @@ export const useProductFilter = create<ProductFilter>()((set, get) => ({
     const { selectRow, products, setProducts, setSelectRow } = get();
     const productIds = Array.from(selectRow);
 
-    // Import your deleteProducts action
     const { deleteProducts } = await import("@/actions/deleteProduct");
-    const deleted = await deleteProducts(productIds);
+    const deleted = await deleteProducts(storeslug, productIds);
 
     if (deleted.success) {
       setProducts(products.filter((p) => !selectRow.has(p.id)));
@@ -249,7 +249,7 @@ export const useProductFilter = create<ProductFilter>()((set, get) => ({
 
     const { updatedProductStatus } =
       await import("@/actions/updateProductStatus");
-    const update = await updatedProductStatus(status, productIds);
+    const update = await updatedProductStatus(storeslug, status, productIds);
 
     if (update.success) {
       toast.success(
@@ -288,9 +288,8 @@ export const useProductFilter = create<ProductFilter>()((set, get) => ({
     }
   },
 
-  fetchCatalogs: async () => {
-    const { getAllCatalogs } = await import("@/actions/getCatlaogs");
-    const catalogsList = await getAllCatalogs();
+  fetchCatalogs: async (storeslug) => {
+    const catalogsList = await getAllCatalogs(storeslug);
     set({ catalogs: catalogsList });
   },
 
@@ -300,7 +299,7 @@ export const useProductFilter = create<ProductFilter>()((set, get) => ({
 
     const { addProductToCatalog } =
       await import("@/actions/addProductToCatalog");
-    const update = await addProductToCatalog(productIds, catalogId);
+    const update = await addProductToCatalog(storeslug, productIds, catalogId);
 
     if (update.success) {
       toast.success(
@@ -318,7 +317,7 @@ export const useProductFilter = create<ProductFilter>()((set, get) => ({
     const productIds = Array.from(selectRow);
 
     const { excludeFromCatalog } = await import("@/actions/deleteFromCatalog");
-    const update = await excludeFromCatalog(productIds, catalogId);
+    const update = await excludeFromCatalog(storeslug, productIds, catalogId);
 
     if (update.success) {
       toast.success(

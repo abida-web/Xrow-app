@@ -80,3 +80,17 @@ export interface Collection {
   createdAt: Date;
   collectionProducts: any[];
 }
+export interface Customer {
+  id: string;
+  email: string;
+  phone: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  status: string;
+  verifiedEmail: boolean;
+  totalSpent: string | null;
+  note: string | null;
+  storeId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}

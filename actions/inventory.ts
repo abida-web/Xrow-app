@@ -1,43 +1,53 @@
 "use server";
 
 import { db } from "@/drizzle/db";
-import { productVariants, products, store } from "@/drizzle/schema";
-import { auth } from "@/lib/auth";
-import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
+import {
+  inventoryLevels,
+  locations,
+  productVariants,
+  products,
+} from "@/drizzle/schema";
+import { and, eq } from "drizzle-orm";
+import { getVerifiedStoreBySlug } from "@/lib/store-utils";
 
-export const getInventory = async () => {
+export const getInventory = async (storeslug: string) => {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session?.user?.id) {
-      return [];
-    }
-
-    const storeOwner = await db.query.store.findFirst({
-      where: eq(store.ownerId, session.user.id),
+    const storeOwner = await getVerifiedStoreBySlug(storeslug);
+    const location = await db.query.locations.findFirst({
+      where: eq(locations.storeId, storeOwner.id),
     });
 
-    if (!storeOwner) {
+    if (!location) {
       return [];
     }
 
-    // Get all product variants for this store by joining with products table
-    const variants = await db
+    // Get inventory with location information
+    const inventory = await db
       .select({
         id: productVariants.id,
         name: productVariants.title,
         sku: productVariants.sku,
         price: productVariants.price,
-        inventoryQuantity: productVariants.inventoryQuantity,
         productId: productVariants.productId,
+        productName: products.name,
+        locationId: locations.id,
+        available: inventoryLevels.available,
+        comming: inventoryLevels.incoming,
+        commited: inventoryLevels.committed,
+        onHand: inventoryLevels.onHand,
+        locationName: locations.name, // Added location name
       })
-      .from(productVariants)
+      .from(inventoryLevels)
+      .innerJoin(
+        productVariants,
+        eq(inventoryLevels.variantId, productVariants.id),
+      )
       .innerJoin(products, eq(productVariants.productId, products.id))
+      .leftJoin(locations, eq(inventoryLevels.locationId, locations.id))
       .where(eq(products.storeId, storeOwner.id))
-      .orderBy(productVariants.title);
+      .orderBy(productVariants.title, locations.name);
 
-    return variants;
+    return inventory;
   } catch (error) {
     console.error("Error fetching inventory:", error);
     return [];
