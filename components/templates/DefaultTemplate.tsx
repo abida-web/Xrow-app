@@ -131,12 +131,12 @@ const DefaultTemplate: React.FC<DefaultTemplateProps> = ({
                       className="text-lg font-bold"
                       style={{ color: settings.primaryColor }}
                     >
-                      ${product.price.toFixed(2)}
+                      ${product.price}
                     </span>
                     {product.compareAtPrice &&
                       product.compareAtPrice > product.price && (
                         <span className="text-sm text-gray-400 line-through">
-                          ${product.compareAtPrice.toFixed(2)}
+                          ${product.compareAtPrice}
                         </span>
                       )}
                   </div>

@@ -53,9 +53,7 @@ export async function POST(req: Request) {
           phone: customerForm.phone || null,
           firstName: customerForm.firstName || null,
           lastName: customerForm.lastName || null,
-          status: "enabled",
-          verifiedEmail: false,
-          totalSpent: "0",
+          subscribe: false,
           note: null,
           storeId: storeOwner.id,
         })

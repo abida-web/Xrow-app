@@ -27,3 +27,8 @@ export function generateSlug(shopName: string) {
 export function hashGiftCardCode(code: string): string {
   return createHash("sha256").update(code).digest("hex");
 }
+export const initialCountryLookup = async () => {
+  const res = await fetch("https://ipapi.co/json");
+  const data = await res.json();
+  return data.country_code;
+};

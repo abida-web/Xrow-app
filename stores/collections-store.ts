@@ -5,7 +5,10 @@ import { useProductsStore } from "./product-functions";
 // Collection Store (for list page)
 interface CollectionStore {
   isDeleting: boolean;
-  deleteCollections: (collectionIds: string[]) => Promise<boolean>;
+  deleteCollections: (
+    storeslug: string,
+    collectionIds: string[],
+  ) => Promise<boolean>;
   updateCollection: (id: string, updatedData: any) => void;
 }
 
@@ -43,11 +46,11 @@ interface CollectionFormState {
 export const useCollectionStore = create<CollectionStore>((set) => ({
   isDeleting: false,
 
-  deleteCollections: async (collectionIds: string[]) => {
+  deleteCollections: async (storeslug: string, collectionIds: string[]) => {
     set({ isDeleting: true });
 
     try {
-      const result = await removeCollection(collectionIds);
+      const result = await removeCollection(storeslug, collectionIds);
 
       if (result.success) {
         // Update the products store to remove deleted collections

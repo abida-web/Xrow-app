@@ -5,9 +5,12 @@ import {
   categories,
   collectionProducts,
   collections,
+  customerAddresses,
   customers,
+  giftCards,
   inventoryLevels,
   locations,
+  orders,
   productImages,
   products,
   productTags,
@@ -150,9 +153,38 @@ export const inventoryLevelsRelations = relations(
     }),
   }),
 );
-export const customersRelations = relations(customers, ({ one }) => ({
+export const customersRelations = relations(customers, ({ one, many }) => ({
   store: one(store, {
     fields: [customers.storeId],
     references: [store.id],
+  }),
+  orders: many(orders),
+  addresses: many(customerAddresses),
+  giftCards: many(giftCards),
+}));
+export const customerAddressesRelations = relations(
+  customerAddresses,
+  ({ one }) => ({
+    customer: one(customers, {
+      fields: [customerAddresses.customerId],
+      references: [customers.id],
+    }),
+  }),
+);
+export const giftCardsRelations = relations(giftCards, ({ one }) => ({
+  store: one(store, {
+    fields: [giftCards.storeId],
+    references: [store.id],
+  }),
+  customer: one(customers, {
+    fields: [giftCards.customerId],
+    references: [customers.id],
+  }),
+}));
+
+export const ordersRelations = relations(orders, ({ one }) => ({
+  customer: one(customers, {
+    fields: [orders.customerId],
+    references: [customers.id],
   }),
 }));

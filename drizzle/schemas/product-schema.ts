@@ -233,21 +233,27 @@ export const customers = pgTable("customers", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull(),
   phone: text("phone"),
-
+  subscribe: boolean("subscribe").default(false),
   firstName: text("first_name"),
   lastName: text("last_name"),
-
-  status: text("status").notNull().default("enabled"),
-
-  verifiedEmail: boolean("verified_email").notNull().default(false),
-
-  totalSpent: numeric("total_spent").default("0"),
   note: text("note"),
   storeId: uuid("store_id").references(() => store.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
-
+export const customerAddresses = pgTable("customerAddresses", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  customerId: uuid("customer_id").references(() => customers.id),
+  country: text("country").notNull(),
+  city: text("city").notNull(),
+  addressLineOne: text("address_line_one").notNull(),
+  addressLineTwo: text("address_line_two").notNull(),
+  postalCode: text("postalcode"),
+  zip: text("zip"),
+  acceptsMarketing: boolean("accepts_marketing"),
+  totalSpent: numeric("total_spent").default("0"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
 // Gift Cards Table
 export const giftCards = pgTable("gift_cards", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -275,22 +281,37 @@ export const giftCards = pgTable("gift_cards", {
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
   orderNumber: text("order_number").notNull().unique(),
-
+  storeId: uuid("store_id").references(() => store.id),
   customerId: uuid("customer_id").references(() => customers.id),
-
+  financialStatus: text("financial_status"),
+  fulfillmentStatus: text("fulfillment_status"),
   totalPrice: numeric("total_price").notNull(),
   currency: text("currency").notNull().default("USD"),
-
+  subtotalPrice: numeric("subtotal_price"),
   status: text("status").notNull().default("pending"),
-
-  // Gift card fields
+  shippingPrice: numeric("shipping_price"),
+  taxPrice: numeric("tax_price"),
+  discountPrice: numeric("discount_price"),
+  customerEmail: text("customer_email"),
+  customerPhone: text("customer_phone"),
   giftCardId: uuid("gift_card_id").references(() => giftCards.id),
   giftCardApplied: numeric("gift_card_applied"),
-
+  placedAt: timestamp("placed_at").notNull().defaultNow(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
-
+export const orderItems = pgTable("order_iems", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  orderId: uuid("order_id").references(() => orders.id),
+  productId: uuid("product_id").references(() => products.id),
+  variantId: uuid("variant_id").references(() => productVariants.id),
+  sku: text("sku"),
+  quantity: numeric("quantity"),
+  unitPrice: numeric("unit_price"),
+  discountAmount: numeric("discount_amount"),
+  lineTotal: numeric("line_total"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
 // Gift Card Transactions Table
 export const giftCardTransactions = pgTable("gift_card_transactions", {
   id: uuid("id").primaryKey().defaultRandom(),
