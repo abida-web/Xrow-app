@@ -20,6 +20,16 @@ import { ImagesSection } from "./ImageSection";
 import { generateSlug } from "@/modules/utils";
 import { getAllCategories } from "@/actions/getCategories";
 import { VariantsSection } from "./VarientSection";
+import { Switch } from "@/components/ui/switch";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface CategoryProps {
   id: string;
@@ -39,9 +49,17 @@ const ProductForm = ({
 }: ProductFormProps) => {
   const [categories, setCategories] = useState<CategoryProps[]>([]);
   const formData = useProductStore((state) => state.formData);
+  const [tagInput, setTagInput] = useState("");
+  const [categorySearch, setCategorySearch] = useState("");
   const updateField = useProductStore((state) => state.updateField);
   const setFormData = useProductStore((state) => state.setFormData);
   const resetForm = useProductStore((state) => state.resetForm);
+  const addTags = useProductStore((state) => state.addTag);
+  const updateVariantInventoryLevels = useProductStore(
+    (state) => state.updateVariantInventoryLevels,
+  );
+  const storeLocations = useProductStore((state) => state.storeLocations);
+  const { isInventoryTracked, setIsInventoryTracked } = useProductStore();
 
   useEffect(() => {
     if (initialData) {
@@ -76,16 +94,12 @@ const ProductForm = ({
     [updateField],
   );
 
-  const handleTagsChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const tagsArray = e.target.value
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag);
-      updateField("tags", tagsArray);
-    },
-    [updateField],
-  );
+  const handleAddTag = () => {
+    if (tagInput.trim()) {
+      addTags(tagInput);
+      setTagInput("");
+    }
+  };
 
   const removeTag = useCallback(
     (tagToRemove: string) => {
@@ -95,15 +109,24 @@ const ProductForm = ({
     [formData.tags, updateField],
   );
 
-  const categoryItems = useMemo(
-    () =>
-      categories.map((cat) => (
-        <SelectItem key={cat.id} value={cat.id}>
-          {cat.name}
-        </SelectItem>
-      )),
-    [categories],
-  );
+  const filteredCategories = useMemo(() => {
+    return categories.filter((cat) =>
+      cat.name.toLowerCase().includes(categorySearch.toLowerCase()),
+    );
+  }, [categories, categorySearch]); // Added categorySearch dependency
+
+  const handleCategorySelect = (value: string) => {
+    setCategorySearch(value);
+    const selectedCategory = categories.find((cat) => cat.name === value);
+    if (selectedCategory) {
+      updateField("categoryId", selectedCategory.id);
+    }
+  };
+
+  const handleClearCategory = () => {
+    updateField("categoryId", "");
+    setCategorySearch("");
+  };
 
   const tagsDisplay = useMemo(
     () =>
@@ -119,6 +142,7 @@ const ProductForm = ({
                 type="button"
                 onClick={() => removeTag(tag)}
                 className="hover:text-red-500 focus:outline-none"
+                aria-label={`Remove tag ${tag}`}
               >
                 <X size={12} />
               </button>
@@ -128,6 +152,13 @@ const ProductForm = ({
       ),
     [formData.tags, removeTag],
   );
+
+  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
 
   return (
     <div className="w-full py-8">
@@ -147,19 +178,26 @@ const ProductForm = ({
             {/* Basic Info */}
             <Card className="p-5 space-y-4">
               <div>
-                <Label className="text-sm">Title</Label>
+                <Label htmlFor="name" className="text-sm">
+                  Title
+                </Label>
                 <Input
+                  id="name"
                   name="name"
                   placeholder="Short sleeve t-shirt"
                   value={formData.name || ""}
                   onChange={handleInputChange}
                   className="mt-1"
+                  required
                 />
               </div>
 
               <div>
-                <Label className="text-sm">Slug</Label>
+                <Label htmlFor="slug" className="text-sm">
+                  Slug
+                </Label>
                 <Input
+                  id="slug"
                   name="slug"
                   placeholder="short-sleeve-t-shirt"
                   value={formData.slug || ""}
@@ -170,8 +208,11 @@ const ProductForm = ({
               </div>
 
               <div>
-                <Label className="text-sm">Description</Label>
+                <Label htmlFor="description" className="text-sm">
+                  Description
+                </Label>
                 <Textarea
+                  id="description"
                   name="description"
                   rows={4}
                   placeholder="Product description"
@@ -182,18 +223,48 @@ const ProductForm = ({
               </div>
 
               <div>
-                <Label className="text-sm">Category</Label>
-                <Select
-                  value={formData.categoryId || ""}
-                  onValueChange={(value) => updateField("categoryId", value)}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>{categoryItems}</SelectContent>
-                </Select>
+                <Label htmlFor="category" className="text-sm">
+                  Category
+                </Label>
+                <div className="relative mt-1">
+                  <Input
+                    id="category"
+                    list="categories-list"
+                    placeholder="Search or select category..."
+                    value={categorySearch}
+                    onChange={(e) => handleCategorySelect(e.target.value)}
+                    className="pr-20"
+                  />
+                  {formData.categoryId && (
+                    <button
+                      type="button"
+                      onClick={handleClearCategory}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-red-500 hover:text-red-700"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <datalist id="categories-list">
+                  {filteredCategories.map((cat) => (
+                    <option key={cat.id} value={cat.name} />
+                  ))}
+                </datalist>
+
+                {formData.categoryId && (
+                  <p className="text-xs text-green-600 mt-2">
+                    Selected:{" "}
+                    {
+                      categories.find((cat) => cat.id === formData.categoryId)
+                        ?.name
+                    }
+                  </p>
+                )}
               </div>
             </Card>
+
+            {/* Images */}
+            <ImagesSection />
 
             {/* Options Card */}
             <Card className="p-5">
@@ -222,8 +293,28 @@ const ProductForm = ({
               </div>
             </Card>
 
-            {/* Images */}
-            <ImagesSection />
+            <Card className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium">Track inventory</h3>
+                  <p className="text-xs text-gray-500">
+                    {isInventoryTracked
+                      ? "Stock levels will be monitored"
+                      : "Inventory tracking is disabled"}
+                  </p>
+                </div>
+                <Switch
+                  checked={isInventoryTracked}
+                  onCheckedChange={setIsInventoryTracked}
+                />
+              </div>
+
+              {!isInventoryTracked && (
+                <div className="mt-3 text-xs text-yellow-600 bg-yellow-50 p-2 rounded">
+                  ⚠️ Variants will be created without inventory quantities
+                </div>
+              )}
+            </Card>
 
             {/* Variants */}
             <VariantsSection />
@@ -233,8 +324,11 @@ const ProductForm = ({
           <div className="space-y-6">
             <Card className="p-5 space-y-4">
               <div>
-                <Label className="text-sm">Product Type</Label>
+                <Label htmlFor="productType" className="text-sm">
+                  Product Type
+                </Label>
                 <Input
+                  id="productType"
                   placeholder="Shoes, Clothes, Accessories"
                   value={formData.productType || ""}
                   onChange={(e) => updateField("productType", e.target.value)}
@@ -243,8 +337,11 @@ const ProductForm = ({
               </div>
 
               <div>
-                <Label className="text-sm">Vendor</Label>
+                <Label htmlFor="vendor" className="text-sm">
+                  Vendor
+                </Label>
                 <Input
+                  id="vendor"
                   placeholder="Nike, Dior, Pandora"
                   value={formData.vendor || ""}
                   onChange={(e) => updateField("vendor", e.target.value)}
@@ -253,12 +350,14 @@ const ProductForm = ({
               </div>
 
               <div>
-                <Label className="text-sm">Status</Label>
+                <Label htmlFor="status" className="text-sm">
+                  Status
+                </Label>
                 <Select
                   value={formData.status || "draft"}
                   onValueChange={(value) => updateField("status", value)}
                 >
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger id="status" className="mt-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -271,12 +370,23 @@ const ProductForm = ({
 
               <div>
                 <Label className="text-sm">Tags</Label>
-                <Input
-                  placeholder="fashion, house, shoes"
-                  value={formData.tags?.join(", ") || ""}
-                  onChange={handleTagsChange}
-                  className="mt-1"
-                />
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleTagInputKeyDown}
+                    placeholder="Enter tags"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAddTag}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Add
+                  </Button>
+                </div>
                 {tagsDisplay}
               </div>
             </Card>

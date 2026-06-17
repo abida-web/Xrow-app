@@ -19,7 +19,7 @@ const NewCollection = () => {
     const response = await fetch("/api/dashboard/collections", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, storeslug }),
     });
 
     if (!response.ok) {

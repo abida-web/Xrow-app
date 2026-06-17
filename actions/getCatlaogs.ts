@@ -1,24 +1,14 @@
 "use server";
 import { db } from "@/drizzle/db";
-import { catalogs, store } from "@/drizzle/schema";
-import { auth } from "@/lib/auth";
+import { catalogs } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
+import { getVerifiedStoreBySlug } from "@/lib/store-utils";
 import { ca } from "zod/v4/locales";
 
-export const getAllCatalogs = async () => {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("unauthorized");
-  }
-  const storeOwner = await db.query.store.findFirst({
-    where: eq(store.ownerId, session?.user.id),
-  });
-  if (!storeOwner) {
-    throw new Error("Store not existed");
-  }
+export const getAllCatalogs = async (storeslug: string) => {
+  const storeOwner = await getVerifiedStoreBySlug(storeslug);
   const catalogsList = await db.query.catalogs.findMany({
-    where: eq(catalogs.storeId, storeOwner?.id),
+    where: eq(catalogs.storeId, storeOwner.id),
     with: {
       catalogProducts: true,
     },

@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { createHash } from "crypto";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -23,3 +24,11 @@ export function generateSlug(shopName: string) {
     .replace(/[\s-]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
+export function hashGiftCardCode(code: string): string {
+  return createHash("sha256").update(code).digest("hex");
+}
+export const initialCountryLookup = async () => {
+  const res = await fetch("https://ipapi.co/json");
+  const data = await res.json();
+  return data.country_code;
+};

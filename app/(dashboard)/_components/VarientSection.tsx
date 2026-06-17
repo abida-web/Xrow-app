@@ -1,3 +1,4 @@
+// Updated VariantsSection with per-location inventory
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -5,8 +6,21 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useProductStore } from "@/stores/product-create-store";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useEffect } from "react";
+import { useParams } from "next/navigation";
 
 export const VariantsSection = () => {
+  const params = useParams();
+  const storeslug = params.storeslug;
+
   const variants = useProductStore((state) => state.formData.variants);
   const images = useProductStore((state) => state.formData.images);
   const option1Name = useProductStore((state) => state.formData.option1Name);
@@ -15,6 +29,31 @@ export const VariantsSection = () => {
   const addVariant = useProductStore((state) => state.addVariant);
   const removeVariant = useProductStore((state) => state.removeVariant);
   const updateVariant = useProductStore((state) => state.updateVariant);
+  const updateVariantInventoryLevels = useProductStore(
+    (state) => state.updateVariantInventoryLevels,
+  );
+  const fetchStoreLocations = useProductStore(
+    (state) => state.fetchStoreLocations,
+  );
+  const setIsInventoryTracked = useProductStore(
+    (state) => state.setIsInventoryTracked,
+  );
+  const storeLocations = useProductStore((state) => state.storeLocations);
+  const isInventoryTracked = useProductStore(
+    (state) => state.isInventoryTracked,
+  );
+
+  // Fix: Proper useEffect without async in the callback
+  useEffect(() => {
+    const loadLocations = async () => {
+      await fetchStoreLocations();
+    };
+    loadLocations();
+    setIsInventoryTracked(true);
+  }, [fetchStoreLocations, setIsInventoryTracked]);
+
+  // Don't show inventory table if tracking is disabled or no locations
+  const showInventoryTable = isInventoryTracked && storeLocations.length > 0;
 
   return (
     <Card className="p-5">
@@ -40,6 +79,7 @@ export const VariantsSection = () => {
               key={index}
               className="flex flex-col gap-3 border-b pb-4 last:border-0"
             >
+              {/* Remove button */}
               {variants.length > 1 && (
                 <div className="flex justify-end">
                   <button
@@ -52,7 +92,7 @@ export const VariantsSection = () => {
                 </div>
               )}
 
-              {/* Shopify-style option values */}
+              {/* Option values */}
               {option1Name && (
                 <div>
                   <Label className="text-xs">{option1Name}</Label>
@@ -95,21 +135,153 @@ export const VariantsSection = () => {
                 </div>
               )}
 
+              {/* Title */}
               <div>
-                <Label className="text-xs">Title (auto-generated)</Label>
+                <Label className="text-xs">Title</Label>
                 <Input
                   type="text"
                   placeholder="Small / Red / Cotton"
-                  disabled
+                  value={variant.title || ""}
+                  onChange={(e) =>
+                    updateVariant(index, "title", e.target.value)
+                  }
                 />
               </div>
 
+              {/* Inventory by Location - Only show if tracking is enabled AND locations exist */}
+              {showInventoryTable && (
+                <div className="mt-4">
+                  <Label className="text-sm font-medium mb-2 block">
+                    Inventory by Location
+                  </Label>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="text-gray-800 bg-gray-100">
+                          <TableHead>Location</TableHead>
+                          <TableHead>Available</TableHead>
+                          <TableHead>Incoming</TableHead>
+                          <TableHead>Committed</TableHead>
+                          <TableHead>On Hand</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {storeLocations.map((location) => {
+                          const level = variant.inventoryLevels?.find(
+                            (l) => l.locationId === location.id,
+                          ) || {
+                            available: 0,
+                            onHand: 0,
+                            incoming: 0,
+                            committed: 0,
+                          };
+
+                          return (
+                            <TableRow key={location.id}>
+                              <TableCell className="font-medium">
+                                {location.name}
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  className="w-24"
+                                  placeholder="0"
+                                  value={level.available}
+                                  onChange={(e) =>
+                                    updateVariantInventoryLevels(
+                                      index,
+                                      location.id,
+                                      "available",
+                                      parseInt(e.target.value) || 0,
+                                    )
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  className="w-24"
+                                  placeholder="0"
+                                  value={level.incoming}
+                                  onChange={(e) =>
+                                    updateVariantInventoryLevels(
+                                      index,
+                                      location.id,
+                                      "incoming",
+                                      parseInt(e.target.value) || 0,
+                                    )
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  className="w-24"
+                                  placeholder="0"
+                                  value={level.committed}
+                                  onChange={(e) =>
+                                    updateVariantInventoryLevels(
+                                      index,
+                                      location.id,
+                                      "committed",
+                                      parseInt(e.target.value) || 0,
+                                    )
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  className="w-24"
+                                  placeholder="0"
+                                  value={level.onHand}
+                                  onChange={(e) =>
+                                    updateVariantInventoryLevels(
+                                      index,
+                                      location.id,
+                                      "onHand",
+                                      parseInt(e.target.value) || 0,
+                                    )
+                                  }
+                                />
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              {/* Show message when inventory tracking is off */}
+              {!isInventoryTracked && (
+                <div className="mt-4 text-xs text-yellow-600 bg-yellow-50 p-2 rounded">
+                  Inventory tracking is disabled for this product. Enable it in
+                  the product settings.
+                </div>
+              )}
+
+              {/* Show message when no locations exist */}
+              {isInventoryTracked && storeLocations.length === 0 && (
+                <div className="mt-4 text-xs text-yellow-600 bg-yellow-50 p-2 rounded">
+                  No store locations found. Please add locations first.
+                </div>
+              )}
+
+              {/* Price and other fields */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Price</Label>
                   <Input
                     type="number"
                     placeholder="0.00"
+                    min="0"
+                    step="0.01"
                     value={variant.price || 0}
                     onChange={(e) =>
                       updateVariant(
@@ -122,10 +294,12 @@ export const VariantsSection = () => {
                 </div>
 
                 <div>
-                  <Label className="text-xs">Compare at Price (Sale)</Label>
+                  <Label className="text-xs">Compare at Price</Label>
                   <Input
                     type="number"
                     placeholder="0.00"
+                    min="0"
+                    step="0.01"
                     value={variant.compareAtPrice || ""}
                     onChange={(e) =>
                       updateVariant(
@@ -145,6 +319,8 @@ export const VariantsSection = () => {
                     <Input
                       type="number"
                       placeholder="0.00"
+                      min="0"
+                      step="0.01"
                       value={variant.weight || ""}
                       onChange={(e) =>
                         updateVariant(
@@ -171,24 +347,6 @@ export const VariantsSection = () => {
                 </div>
 
                 <div>
-                  <Label className="text-xs">Inventory Quantity</Label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={variant.inventoryQuantity || 0}
-                    onChange={(e) =>
-                      updateVariant(
-                        index,
-                        "inventoryQuantity",
-                        parseInt(e.target.value) || 0,
-                      )
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
                   <Label className="text-xs">SKU</Label>
                   <Input
                     type="text"
@@ -199,7 +357,9 @@ export const VariantsSection = () => {
                     }
                   />
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 gap-3">
                 <div>
                   <Label className="text-xs">Barcode</Label>
                   <Input
@@ -213,6 +373,7 @@ export const VariantsSection = () => {
                 </div>
               </div>
 
+              {/* Image selection */}
               {images.length > 0 && (
                 <div>
                   <Label className="text-xs">Variant Image</Label>

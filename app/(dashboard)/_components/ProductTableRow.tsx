@@ -2,6 +2,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Product } from "@/types";
 import { ParamValue } from "next/dist/server/request/params";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 interface RowProps {
@@ -30,6 +31,7 @@ const ProductTableRow = ({
   onCheckedChange,
   visibleColumns,
 }: RowProps) => {
+  const router = useRouter();
   const isSelected = selectRow.has(product.id);
   const catalogs = product.catalogs || [];
 
@@ -115,15 +117,31 @@ const ProductTableRow = ({
     }
   };
 
+  const handleRowClick = () => {
+    router.push(`/dashboard/${storeslug}/products/${product.id}`);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      router.push(`/dashboard/${storeslug}/products/${product.id}`);
+    }
+  };
+
   return (
     <TableRow
       data-state={isSelected ? "selected" : undefined}
-      className="hover:bg-gray-50 transition-colors text-xs"
+      className="hover:bg-gray-50 transition-colors text-xs cursor-pointer"
+      onClick={handleRowClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="link"
     >
       <TableCell className="w-10">
         <Checkbox
           checked={isSelected}
           onCheckedChange={onCheckedChange}
+          onClick={(e) => e.stopPropagation()}
           aria-label={`Select ${product.name}`}
         />
       </TableCell>

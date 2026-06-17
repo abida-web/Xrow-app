@@ -5,7 +5,8 @@ import {
   productTags,
   productVariants,
 } from "@/drizzle/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { getVerifiedStoreBySlug } from "@/lib/store-utils";
 
 export async function PATCH(
   request: Request,
@@ -14,6 +15,13 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
+    const { storeslug } = body;
+
+    if (!storeslug) {
+      return Response.json({ error: "storeslug is required" }, { status: 400 });
+    }
+
+    const storeOwner = await getVerifiedStoreBySlug(storeslug);
 
     // Separate main product data from related data
     const {
@@ -46,7 +54,7 @@ export async function PATCH(
       await db
         .update(products)
         .set(cleanProductData)
-        .where(eq(products.id, id));
+        .where(and(eq(products.id, id), eq(products.storeId, storeOwner.id)));
     }
 
     // 2. Update tags

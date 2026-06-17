@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,7 @@ import { VariantsSection } from "@/app/(dashboard)/_components/VarientSection";
 
 import { generateSlug } from "@/modules/utils";
 import ProductForm from "@/app/(dashboard)/_components/ProductForm";
+import { useProductsStore } from "@/stores/product-functions";
 
 interface CategoryProps {
   id: string;
@@ -31,12 +32,17 @@ interface CategoryProps {
 }
 const NewPage = () => {
   const router = useRouter();
+  const params = useParams();
+  const storeslug = String(params.storeslug);
   const [categories, setCategories] = useState<CategoryProps[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Selective subscriptions - only subscribe to what this component needs
   const formData = useProductStore((state) => state.formData);
   const setFormData = useProductStore((state) => state.setFormData);
   const updateField = useProductStore((state) => state.updateField);
+  const isInventoryTracked = useProductStore(
+    (state) => state.isInventoryTracked,
+  );
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -91,7 +97,7 @@ const NewPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ formData, isInventoryTracked, storeslug }),
       });
       if (res.ok) {
         toast.success("Product Added successfully");

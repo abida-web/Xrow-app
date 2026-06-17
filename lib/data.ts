@@ -29,12 +29,7 @@ export const sidebarItems = [
         path: "/products/collections",
       },
       { id: "inventory", label: "Inventory", path: "/products/inventory" },
-      {
-        id: "purchase-orders",
-        label: "Purchase orders",
-        path: "/products/purchase-orders",
-      },
-      { id: "transfers", label: "Transfers", path: "/products/transfers" },
+
       { id: "gift-cards", label: "Gift cards", path: "/products/gift-cards" },
     ],
   },

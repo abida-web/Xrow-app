@@ -8,6 +8,7 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
   },
   sessions: {
     cookieCache: {
@@ -15,6 +16,20 @@ export const auth = betterAuth({
       maxAge: 60 * 60 * 24 * 7,
     },
   },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url, token }, request) => {
+      // Make sure to actually send the email
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your email address",
+        html: `<a href="${url}">Click here to verify your email</a>`,
+        text: `Click the link to verify your email: ${url}`,
+      });
+    },
+    sendOnSignIn: true, // Re-send if user tries to sign in without verifying
+    autoSignInAfterVerification: true, // Auto sign-in after verification
+  },
+
   user: {
     additionalFields: {
       onboardingCompleted: {

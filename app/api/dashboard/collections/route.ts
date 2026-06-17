@@ -1,26 +1,24 @@
 import { db } from "@/drizzle/db";
-import { collectionProducts, collections, store } from "@/drizzle/schema";
-import { auth } from "@/lib/auth";
+import { collectionProducts, collections } from "@/drizzle/schema";
 import { collectionRepository } from "../../../../modules/collections-repository";
 import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { getVerifiedStoreBySlug } from "@/lib/store-utils";
 import { generateSlug } from "@/modules/utils";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const url = new URL(request.url);
+    const storeslug = url.searchParams.get("storeslug");
+
+    if (!storeslug) {
+      return NextResponse.json(
+        { error: "storeslug is required" },
+        { status: 400 },
+      );
     }
 
-    const storeOwner = await db.query.store.findFirst({
-      where: eq(store.ownerId, session.user.id),
-    });
-
-    if (!storeOwner) {
-      return NextResponse.json({ error: "Store not found" }, { status: 404 });
-    }
+    const storeOwner = await getVerifiedStoreBySlug(storeslug);
 
     const collectionList = await collectionRepository.getAllCollection(
       db,
@@ -37,23 +35,30 @@ export async function GET() {
   }
 }
 export async function POST(request: Request) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 404 });
-  }
-  const storeData = await db.query.store.findFirst({
-    where: eq(store.ownerId, session.user.id),
-  });
-  if (!storeData) {
-    return NextResponse.json({ error: "Store doesnt exsist" }, { status: 404 });
-  }
   const body = await request.json();
-  const { name, description, type, publishedScope, image, productIds } = body;
+  const {
+    storeslug,
+    name,
+    description,
+    type,
+    publishedScope,
+    image,
+    productIds,
+  } = body;
+
+  if (!storeslug) {
+    return NextResponse.json(
+      { error: "storeslug is required" },
+      { status: 400 },
+    );
+  }
+
+  const storeData = await getVerifiedStoreBySlug(storeslug);
   const [newCollection] = await db
     .insert(collections)
     .values({
       storeId: storeData.id,
-      name: name, // Make sure name is explicitly set
+      name: name,
       description: description || null,
       slug: generateSlug(name),
       type: type || "manual",
@@ -61,6 +66,7 @@ export async function POST(request: Request) {
       image: image || null,
     })
     .returning();
+
   if (productIds && productIds.length > 0) {
     await db.insert(collectionProducts).values(
       productIds.map((productId: string) => ({
@@ -69,5 +75,6 @@ export async function POST(request: Request) {
       })),
     );
   }
+
   return NextResponse.json({ success: true }, { status: 201 });
 }

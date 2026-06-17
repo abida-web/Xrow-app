@@ -2,10 +2,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/drizzle/db";
 import { z } from "zod";
-import { productSalesChannels, salesChannels, store } from "@/drizzle/schema";
+import { productSalesChannels, salesChannels } from "@/drizzle/schema";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { getVerifiedStoreBySlug } from "@/lib/store-utils";
 import { CreateProductSchema } from "@/modules/types";
 import { createProductWithAllData } from "@/modules/product-create";
 
@@ -18,25 +19,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get the user's store
-    const userStore = await db.query.store.findFirst({
-      where: eq(store.ownerId, session.user.id),
-    });
+    // Verify the requested store belongs to the authenticated user
 
-    if (!userStore) {
+    const body = await request.json();
+    const { formData, isInventoryTracked, storeslug } = body;
+    if (!storeslug) {
       return NextResponse.json(
-        { error: "No store found for this user" },
-        { status: 404 },
+        { error: "storeslug is required" },
+        { status: 400 },
       );
     }
 
-    const body = await request.json();
-    const validatedData = CreateProductSchema.parse(body);
+    const storeOwner = await getVerifiedStoreBySlug(storeslug);
+    const validatedData = CreateProductSchema.parse(formData);
 
     const product = await createProductWithAllData(
       db,
       validatedData,
-      userStore.id,
+      storeOwner.id,
+      isInventoryTracked,
     );
     const onlineChannel = await db.query.salesChannels.findFirst({
       where: and(),

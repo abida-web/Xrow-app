@@ -1,9 +1,8 @@
 "use client";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { SearchInput } from "@/components/ui/search-input";
 import { useProductsStore } from "@/stores/product-functions";
-import { FolderOpen, Plus, Loader2, Tags, Search } from "lucide-react";
+import { FolderOpen, Plus, Loader2, Search, Tags } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,6 +18,7 @@ import { useParams, useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { useCollectionStore } from "@/stores/collections-store";
+import { useSelectableRows } from "@/hooks/use-selectable-rows";
 
 const CollectionsPage = () => {
   const router = useRouter();
@@ -27,31 +27,37 @@ const CollectionsPage = () => {
   const { collections, setCollections } = useProductsStore();
   const { deleteCollections, isDeleting } = useCollectionStore();
 
-  const [selectedCollections, setSelectedCollections] = useState<Set<string>>(
-    new Set(),
-  );
   const [searchQuery, setSearchQuery] = useState("");
 
+  const filteredCollections = collections.filter((collection) =>
+    collection.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const {
+    selectedIds: selectedCollections,
+    selectAll,
+    toggleAll,
+    toggleRow,
+    clearSelection,
+  } = useSelectableRows(filteredCollections);
+
   const handleSelectAll = () => {
-    if (selectedCollections.size === filteredCollections.length) {
-      setSelectedCollections(new Set());
+    if (selectAll) {
+      clearSelection();
     } else {
-      setSelectedCollections(new Set(filteredCollections.map((col) => col.id)));
+      toggleAll();
     }
   };
 
   const handleSelectCollection = (collectionId: string) => {
-    const newSelected = new Set(selectedCollections);
-    if (newSelected.has(collectionId)) {
-      newSelected.delete(collectionId);
-    } else {
-      newSelected.add(collectionId);
-    }
-    setSelectedCollections(newSelected);
+    toggleRow(collectionId);
   };
 
   const handleDeleteSelected = async () => {
-    const success = await deleteCollections(Array.from(selectedCollections));
+    const success = await deleteCollections(
+      storeslug,
+      Array.from(selectedCollections),
+    );
     if (success) {
       toast.success(
         `${selectedCollections.size} collection(s) deleted successfully`,
@@ -59,15 +65,11 @@ const CollectionsPage = () => {
       setCollections(
         collections.filter((col) => !selectedCollections.has(col.id)),
       );
-      setSelectedCollections(new Set());
+      clearSelection();
     } else {
       toast.error("Failed to delete collections");
     }
   };
-
-  const filteredCollections = collections.filter((collection) =>
-    collection.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
 
   if (collections.length === 0) {
     return (
@@ -111,15 +113,13 @@ const CollectionsPage = () => {
       </div>
 
       <Card className="p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search collections..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <SearchInput
+          icon={<Search className="text-gray-400 w-4 h-4" />}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search collections..."
+          className="pl-9"
+        />
       </Card>
 
       <Card className="overflow-hidden">
