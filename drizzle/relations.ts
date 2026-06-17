@@ -10,6 +10,7 @@ import {
   giftCards,
   inventoryLevels,
   locations,
+  orderItems,
   orders,
   productImages,
   products,
@@ -103,6 +104,7 @@ export const storeRelations = relations(store, ({ one, many }) => ({
   catalogs: many(catalogs),
   locations: many(locations),
   customers: many(customers),
+  orders: many(orders),
 }));
 
 export const storeSettingsRelations = relations(storeSettings, ({ one }) => ({
@@ -181,10 +183,22 @@ export const giftCardsRelations = relations(giftCards, ({ one }) => ({
     references: [customers.id],
   }),
 }));
-
-export const ordersRelations = relations(orders, ({ one }) => ({
+export const ordersRelations = relations(orders, ({ one, many }) => ({
+  store: one(store, {
+    fields: [orders.storeId],
+    references: [store.id],
+  }),
   customer: one(customers, {
     fields: [orders.customerId],
     references: [customers.id],
+  }),
+  items: many(orderItems),
+}));
+
+// Order Items relations
+export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderItems.orderId],
+    references: [orders.id],
   }),
 }));
