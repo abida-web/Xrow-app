@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/drizzle/db";
 import { nextCookies } from "better-auth/next-js";
 import { admin } from "better-auth/plugins";
+import { sendEmail } from "./email";
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
